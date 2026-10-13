@@ -655,7 +655,7 @@ export default function AddAgentPage() {
   /* CONNECT                                                                 */
   /* ----------------------------------------------------------------------- */
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     const validationError = validateStep();
 
     if (validationError) {
@@ -665,10 +665,71 @@ export default function AddAgentPage() {
 
     setError("");
 
-    alert(
-      "Existing AI agent is ready to be connected. Backend integration will be added next.",
-    );
+    try {
+      const response = await fetch("http://127.0.0.1:4000/api/agents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agent_name: data.agentName.trim(),
+          description: data.description,
+          department: data.department,
+          runtime: data.runtime,
+          connection_endpoint: data.endpoint,
+          connection_method: data.connectionType,
+
+          // Complete wizard configuration
+        configuration: {
+          agentName: data.agentName.trim(),
+          description: data.description,
+          role: data.role,
+          department: data.department,
+          runtime: data.runtime,
+          connectionType: data.connectionType,
+          endpoint: data.endpoint,
+          capabilities: data.capabilities,
+          permissions: data.permissions,
+          tools: data.tools,
+          customToolInstructions: data.customToolInstructions,
+          customToolFiles: data.customToolFiles,
+          policies: data.policies,
+          companyPolicies: data.companyPolicies,
+          dataSecurity: data.dataSecurity,
+          dataSecurityInstructions: data.dataSecurityInstructions,
+          documents: data.documents,
+          limitations: data.limitations,
+          terms: data.terms,
+          termsFiles: data.termsFiles,
+          confirmed: data.confirmed,
+        },
+      }),
+    });
+
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ||
+            result?.message ||
+            `Save failed with HTTP ${response.status}`,
+        );
+      }
+
+      alert("AI Agent saved successfully!");
+      console.log("Saved agent:", result);
+    } catch (error) {
+      console.error("Failed to save AI agent:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Could not save the AI agent. Check that the backend is running",
+      );
+    }
   };
+
 
   /* ========================================================================= */
   /* RENDER                                                                    */
