@@ -1,15 +1,24 @@
 import "dotenv/config";
-import { Pool } from "pg";
+import { createClient } from "@supabase/supabase-js";
 
-const databaseUrl = process.env.DATABASE_URL;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is not set");
+if (!supabaseUrl) {
+  throw new Error("SUPABASE_URL is not set");
 }
 
-export const pool = new Pool({
-  connectionString: databaseUrl,
-  ssl: {
-    rejectUnauthorized: false,
+if (!supabaseSecretKey) {
+  throw new Error("SUPABASE_SECRET_KEY is not set");
+}
+
+export const supabase = createClient(
+  supabaseUrl,
+  supabaseSecretKey,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
   },
-});
+);

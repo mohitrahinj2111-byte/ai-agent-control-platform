@@ -666,7 +666,7 @@ export default function AddAgentPage() {
     setError("");
 
     try {
-      const response = await fetch("http://127.0.0.1:4000/api/agents", {
+      const response = await fetch("https://ai-agent-control-platform.onrender.com/api/agents", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -706,8 +706,11 @@ export default function AddAgentPage() {
       }),
     });
 
+      console.log("Backend HTTP status:", response.status);
 
       const result = await response.json().catch(() => null);
+
+      console.log("Backend response:", result);
 
       if (!response.ok) {
         throw new Error(
@@ -717,10 +720,12 @@ export default function AddAgentPage() {
         );
       }
 
+      console.log("AI Agent saved successfully:", result);
+
       alert("AI Agent saved successfully!");
       console.log("Saved agent:", result);
     } catch (error) {
-      console.error("Failed to save AI agent:", error);
+      console.error("Failed to save AI Agent:", error);
 
       setError(
         error instanceof Error
