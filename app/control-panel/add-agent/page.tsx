@@ -656,84 +656,107 @@ export default function AddAgentPage() {
   /* ----------------------------------------------------------------------- */
 
   const handleConnect = async () => {
-    const validationError = validateStep();
+  console.log("[Agent Wizard] Connect button clicked");
 
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+  const validationError = validateStep();
 
-    setError("");
+  if (validationError) {
+    console.error("[Agent Wizard] Validation failed:", validationError);
+    setError(validationError);
+    return;
+  }
 
-    try {
-      const response = await fetch("https://ai-agent-control-platform.onrender.com/api/agents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          agent_name: data.agentName.trim(),
-          description: data.description,
-          department: data.department,
-          runtime: data.runtime,
-          connection_endpoint: data.endpoint,
-          connection_method: data.connectionType,
+  setError("");
 
-          // Complete wizard configuration
-        configuration: {
-          agentName: data.agentName.trim(),
-          description: data.description,
-          role: data.role,
-          department: data.department,
-          runtime: data.runtime,
-          connectionType: data.connectionType,
-          endpoint: data.endpoint,
-          capabilities: data.capabilities,
-          permissions: data.permissions,
-          tools: data.tools,
-          customToolInstructions: data.customToolInstructions,
-          customToolFiles: data.customToolFiles,
-          policies: data.policies,
-          companyPolicies: data.companyPolicies,
-          dataSecurity: data.dataSecurity,
-          dataSecurityInstructions: data.dataSecurityInstructions,
-          documents: data.documents,
-          limitations: data.limitations,
-          terms: data.terms,
-          termsFiles: data.termsFiles,
-          confirmed: data.confirmed,
-        },
-      }),
+  const payload = {
+    agent_name: data.agentName.trim(),
+    description: data.description.trim(),
+    department: data.department,
+    runtime: data.runtime,
+    connection_endpoint: data.endpoint.trim(),
+    connection_method: data.connectionType,
+
+    configuration: {
+      agentName: data.agentName.trim(),
+      description: data.description,
+      role: data.role,
+      department: data.department,
+      runtime: data.runtime,
+      connectionType: data.connectionType,
+      endpoint: data.endpoint,
+      capabilities: data.capabilities,
+      permissions: data.permissions,
+      tools: data.tools,
+      customToolInstructions: data.customToolInstructions,
+      customToolFiles: data.customToolFiles,
+      policies: data.policies,
+      companyPolicies: data.companyPolicies,
+      dataSecurity: data.dataSecurity,
+      dataSecurityInstructions: data.dataSecurityInstructions,
+      documents: data.documents,
+      limitations: data.limitations,
+      terms: data.terms,
+      termsFiles: data.termsFiles,
+      confirmed: data.confirmed,
+    },
+  };
+
+  try {
+    console.log("[Agent Wizard] Sending POST request");
+
+    const response = await fetch("https://ai-agent-control-platform.onrender.com/api/agents", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
 
-      console.log("Backend HTTP status:", response.status);
+    const responseText = await response.text();
 
-      const result = await response.json().catch(() => null);
+    console.log("[Agent Wizard] HTTP status:", response.status);
+    console.log("[Agent Wizard] Response body:", responseText);
 
-      console.log("Backend response:", result);
+    let result: Record<string, unknown> | null = null;
 
-      if (!response.ok) {
-        throw new Error(
-          result?.error ||
-            result?.message ||
-            `Save failed with HTTP ${response.status}`,
-        );
+    if (responseText) {
+      try {
+        const parsed: unknown = JSON.parse(responseText);
+
+        if (
+          typeof parsed === "object" &&
+          parsed !== null &&
+          !Array.isArray(parsed)
+        ) {
+          result = parsed as Record<string, unknown>;
+        }
+      } catch {
+        // Response is not JSON. The raw response is logged above.
       }
-
-      console.log("AI Agent saved successfully:", result);
-
-      alert("AI Agent saved successfully!");
-      console.log("Saved agent:", result);
-    } catch (error) {
-      console.error("Failed to save AI Agent:", error);
-
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Could not save the AI agent. Check that the backend is running",
-      );
     }
-  };
+
+    if (!response.ok) {
+      const message =
+        result?.error ??
+        result?.message ??
+        `Server returned HTTP ${response.status}`;
+
+      throw new Error(String(message));
+    }
+
+    console.log("[Agent Wizard] Agent saved:", result);
+
+    alert("AI Agent saved successfully!");
+  } catch (error) {
+    console.error("[Agent Wizard] Request failed:", error);
+
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Request failed. Check the browser console and backend logs.",
+    );
+  }
+};
 
 
   /* ========================================================================= */
