@@ -445,10 +445,7 @@ export default function AddAgentPage() {
     }
 
     setError("");
-
-    if (step < steps.length - 1) {
-      setStep((current) => current + 1);
-    }
+    setStep((current) => current + 1);
   };
 
   /* ----------------------------------------------------------------------- */
