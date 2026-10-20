@@ -701,7 +701,7 @@ export default function AddAgentPage() {
   try {
     console.log("[Agent Wizard] Sending POST request");
 
-    const response = await fetch("https://ai-agent-control-platform.pages.dev/api/agents", {
+    const response = await fetch("https://ai-agent-control-platform.onrender.com/api/agents", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
