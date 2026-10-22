@@ -35,6 +35,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
 /* ========================================================================= */
 /* TYPES                                                                     */
@@ -2046,6 +2047,8 @@ function HowToAddAgent() {
 /* ========================================================================= */
 
 export default function ControlPanel() {
+  const router = useRouter();
+
   const [showAddAgent, setShowAddAgent] = useState(false);
 
   const [showConnectWizard, setShowConnectWizard] =
@@ -2063,7 +2066,7 @@ export default function ControlPanel() {
   ];
 
   const openAddAgent = () => {
-    setShowAddAgent(true);
+    router.push("/control-panel/add-agent");
   };
 
   const openConnectWizard = () => {
