@@ -711,21 +711,50 @@ function ConnectExistingWizard({
     }
   }, [currentStep, data]);
 
-  const handleContinue = () => {
-    if (!isStepValid) return;
-
-    if (currentStep < 12) {
-      setCurrentStep((step) => step + 1);
-    } else {
-      onFinish();
-    }
-  };
-
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep((step) => step - 1);
     }
   };
+
+     const handleContinue = async () => {
+     if (!isStepValid) return;
+
+    try {
+     const response = await fetch(
+      "https://ai-agent-control-platform.onrender.com/api/wizard/continue",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "continue",
+          step: currentStep,
+          timestamp: new Date().toISOString(),
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        "[WIZARD] Render request failed:",
+        response.status,
+        await response.text()
+      );
+    } else {
+      console.log("[WIZARD] Render received Continue request");
+    }
+  } catch (error) {
+    console.error("[WIZARD] Could not contact Render:", error);
+  }
+
+  if (currentStep < 12) {
+    setCurrentStep((step) => step + 1);
+  } else {
+    onFinish();
+  }
+};
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">

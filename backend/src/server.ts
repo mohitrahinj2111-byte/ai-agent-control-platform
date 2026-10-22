@@ -155,8 +155,6 @@ function sendError(
 async function registerRoutes(): Promise<void> {
   await app.register(cors, {
     origin(origin, callback) {
-      // Requests without Origin include direct browser navigation
-      // and server-to-server requests. CORS does not apply to them.
       if (!origin) {
         callback(null, true);
         return;
@@ -179,11 +177,9 @@ async function registerRoutes(): Promise<void> {
         false,
       );
     },
-    methods: [
-      "GET",
-      "POST",
-      "OPTIONS",
-    ],
+
+    methods: ["GET", "POST", "OPTIONS"],
+
     allowedHeaders: [
       "Content-Type",
       "Authorization",
@@ -248,6 +244,31 @@ async function registerRoutes(): Promise<void> {
           message: "Could not check database connection.",
         });
       }
+    },
+  );
+
+  // ---------------------------------------------------------
+  // WIZARD CONTINUE LOG
+  // POST /api/wizard/continue
+  // ---------------------------------------------------------
+
+  app.post(
+    "/api/wizard/continue",
+    async (
+      request: FastifyRequest,
+      reply: FastifyReply,
+    ) => {
+      request.log.info(
+        {
+          timestamp: new Date().toISOString(),
+        },
+        "[WIZARD] Continue button clicked",
+      );
+
+      return reply.code(200).send({
+        success: true,
+        message: "Wizard Continue request received",
+      });
     },
   );
 
