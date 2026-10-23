@@ -31,6 +31,7 @@ import {
 import {
   ChangeEvent,
   ReactNode,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -2046,16 +2047,27 @@ function HowToAddAgent() {
 /* MAIN CONTROL PANEL                                                        */
 /* ========================================================================= */
 
+type AgentRecord = {
+  id?: string | number;
+  agent_name?: string;
+  agentName?: string;
+  name?: string;
+  runtime?: string;
+  status?: string;
+  created_at?: string;
+  [key: string]: unknown;
+};
+
 export default function ControlPanel() {
   const router = useRouter();
 
+  const [agents, setAgents] = useState<AgentRecord[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [agentsError, setAgentsError] = useState("");
+
   const [showAddAgent, setShowAddAgent] = useState(false);
-
-  const [showConnectWizard, setShowConnectWizard] =
-    useState(false);
-
+  const [showConnectWizard, setShowConnectWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
-
   const [wizardData, setWizardData] =
     useState<WizardData>(createInitialWizardData);
 
@@ -2064,6 +2076,58 @@ export default function ControlPanel() {
     "Agent tasks and execution events will appear here",
     "Human approval requests will appear here",
   ];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchAgents() {
+      try {
+        setAgentsLoading(true);
+        setAgentsError("");
+
+        const response = await fetch(
+          "https://ai-agent-control-platform.onrender.com/api/agents"
+        );
+
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+
+        const result: unknown = await response.json();
+
+        if (
+          typeof result !== "object" ||
+          result === null ||
+          !("agents" in result) ||
+          !Array.isArray(result.agents)
+        ) {
+          throw new Error("Invalid agents response from backend");
+        }
+
+        if (!cancelled) {
+          setAgents(result.agents as AgentRecord[]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch agents:", error);
+
+        if (!cancelled) {
+          setAgentsError(
+            "Agents load nahi ho paaye. Backend connection check karo."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setAgentsLoading(false);
+        }
+      }
+    }
+
+    void fetchAgents();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const openAddAgent = () => {
     router.push("/control-panel/add-agent");
@@ -2083,37 +2147,18 @@ export default function ControlPanel() {
   };
 
   const finishWizard = () => {
-    /*
-     * IMPORTANT:
-     * Abhi ye UI-only implementation hai.
-     *
-     * Real production platform me yahan:
-     *
-     * 1. Backend API call
-     * 2. Agent Registry record
-     * 3. Adapter configuration
-     * 4. Encrypted credentials
-     * 5. Policy configuration
-     * 6. Permission configuration
-     * 7. Audit event
-     *
-     * create honge.
-     */
-
     console.log("Existing agent configuration:", wizardData);
-
     closeWizard();
   };
 
   return (
     <main className="min-h-screen bg-[#f5f8fc] text-slate-900">
       {/* TOP BAR */}
-      <header className="sticky top-0 z-30 flex h-[68px] items-center gap-4 border-b border-slate-200 bg-white px-5">
+      <header className="sticky top-0 z-30 flex min-h-[68px] flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-5 py-3">
         <div className="flex w-[205px] shrink-0 items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
             <Bot size={22} />
           </div>
-
           <div className="text-lg font-bold tracking-tight">
             AI Agent Control Plane
           </div>
@@ -2121,40 +2166,34 @@ export default function ControlPanel() {
 
         <div className="flex h-10 max-w-[400px] flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-400">
           <Search size={17} />
-          <span>
-            Search agents, tasks, tools, data, reports...
-          </span>
+          <span>Search agents, tasks, tools, data, reports...</span>
         </div>
 
         <div className="hidden items-center gap-2 xl:flex">
           <StatCard
             title="Total Agents"
-            value="0"
+            value={agentsLoading ? "..." : String(agents.length)}
             icon={<Bot size={18} />}
             type="blue"
           />
-
           <StatCard
             title="Working"
             value="0"
             icon={<CircleDot size={18} />}
             type="green"
           />
-
           <StatCard
             title="Idle"
             value="0"
             icon={<Clock3 size={18} />}
             type="gray"
           />
-
           <StatCard
             title="Failed"
             value="0"
             icon={<XCircle size={18} />}
             type="red"
           />
-
           <StatCard
             title="Human Approval"
             value="0"
@@ -2164,7 +2203,11 @@ export default function ControlPanel() {
         </div>
 
         <div className="ml-auto flex items-center gap-3">
-          <button className="relative rounded-lg p-2 hover:bg-slate-100">
+          <button
+            type="button"
+            className="relative rounded-lg p-2 hover:bg-slate-100"
+            aria-label="Activity"
+          >
             <Activity size={20} />
             <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-slate-300" />
           </button>
@@ -2172,7 +2215,6 @@ export default function ControlPanel() {
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white">
             <UserCircle size={22} />
           </div>
-
           <div className="hidden text-xs lg:block">
             <div className="font-semibold">Admin</div>
             <div className="text-slate-500">Workspace</div>
@@ -2182,7 +2224,7 @@ export default function ControlPanel() {
 
       <div className="flex">
         {/* SIDEBAR */}
-        <aside className="sticky top-[68px] h-[calc(100vh-68px)] w-[205px] shrink-0 border-r border-slate-200 bg-white p-3">
+        <aside className="sticky top-[68px] hidden h-[calc(100vh-68px)] w-[205px] shrink-0 border-r border-slate-200 bg-white p-3 md:block">
           <nav className="space-y-1">
             {[
               [Network, "Control Panel"],
@@ -2200,6 +2242,7 @@ export default function ControlPanel() {
 
               return (
                 <button
+                  type="button"
                   key={String(label)}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${
                     index === 0
@@ -2208,9 +2251,7 @@ export default function ControlPanel() {
                   }`}
                 >
                   <IconComponent size={18} />
-
                   <span>{String(label)}</span>
-
                   {label === "Human Approvals" && (
                     <span className="ml-auto rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
                       0
@@ -2229,14 +2270,13 @@ export default function ControlPanel() {
               <h1 className="text-2xl font-bold tracking-tight">
                 Control Panel
               </h1>
-
               <p className="mt-1 text-sm text-slate-500">
-                Connect, manage and control your AI workforce
-                from one place.
+                Connect, manage and control your AI workforce from one place.
               </p>
             </div>
 
             <button
+              type="button"
               onClick={openAddAgent}
               className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
@@ -2245,13 +2285,97 @@ export default function ControlPanel() {
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 xl:flex-row">
-            <div className="min-w-0 flex-1">
-              <EmptyArchitecture
-                onAddAgent={openAddAgent}
-              />
+          {/* AGENT REGISTRY */}
+          <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-bold">Registered Agents</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Agents retrieved from your backend registry.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Refresh
+              </button>
             </div>
 
+            {agentsLoading && (
+              <p className="mt-5 text-sm text-slate-500">
+                Loading agents...
+              </p>
+            )}
+
+            {!agentsLoading && agentsError && (
+              <p role="alert" className="mt-5 text-sm text-red-600">
+                {agentsError}
+              </p>
+            )}
+
+            {!agentsLoading && !agentsError && agents.length === 0 && (
+              <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                <Bot size={30} className="mx-auto text-slate-400" />
+                <p className="mt-3 text-sm font-semibold">
+                  No agents registered yet
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Add an agent to see it listed here.
+                </p>
+                <button
+                  type="button"
+                  onClick={openAddAgent}
+                  className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                >
+                  Add AI Agent
+                </button>
+              </div>
+            )}
+
+            {!agentsLoading && !agentsError && agents.length > 0 && (
+              <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {agents.map((agent, index) => {
+                  const name =
+                    agent.agent_name ??
+                    agent.agentName ??
+                    agent.name ??
+                    "Unnamed Agent";
+
+                  return (
+                    <article
+                      key={agent.id ?? `${name}-${index}`}
+                      className="rounded-xl border border-slate-200 p-4"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                          <Bot size={21} />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="break-words font-semibold">
+                            {name}
+                          </h3>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Runtime: {agent.runtime || "Not specified"}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Status: {agent.status || "Registered"}
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <div className="flex flex-col gap-4 xl:flex-row">
+            <div className="min-w-0 flex-1">
+              <EmptyArchitecture onAddAgent={openAddAgent} />
+            </div>
             <HowToAddAgent />
           </div>
 
@@ -2259,23 +2383,18 @@ export default function ControlPanel() {
             {/* ACTIVITY */}
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold">
-                  Live Activity Feed
-                </h2>
-
+                <h2 className="font-bold">Live Activity Feed</h2>
                 <span className="flex items-center gap-1 text-xs text-slate-400">
                   <StatusDot color="green" />
                   Waiting
                 </span>
               </div>
-
               <div className="mt-4 space-y-4">
                 {activity.map((item) => (
                   <div key={item} className="flex gap-3">
                     <div className="mt-0.5 rounded-full bg-slate-50 p-2 text-slate-400">
                       <Zap size={14} />
                     </div>
-
                     <div className="text-xs leading-5 text-slate-500">
                       {item}
                     </div>
@@ -2287,16 +2406,9 @@ export default function ControlPanel() {
             {/* REPORT */}
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold">
-                  Today&apos;s Report
-                </h2>
-
-                <CalendarDays
-                  size={15}
-                  className="text-slate-400"
-                />
+                <h2 className="font-bold">Today&apos;s Report</h2>
+                <CalendarDays size={15} className="text-slate-400" />
               </div>
-
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {[
                   ["0", "Total Tasks"],
@@ -2304,14 +2416,10 @@ export default function ControlPanel() {
                   ["0", "Failed"],
                   ["0", "In Progress"],
                 ].map(([number, label]) => (
-                  <div
-                    key={label}
-                    className="rounded-xl bg-slate-50 p-3"
-                  >
+                  <div key={label} className="rounded-xl bg-slate-50 p-3">
                     <div className="text-xl font-bold text-slate-400">
                       {number}
                     </div>
-
                     <div className="mt-1 text-[11px] text-slate-500">
                       {label}
                     </div>
@@ -2323,25 +2431,16 @@ export default function ControlPanel() {
             {/* APPROVALS */}
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold">
-                  Human Approvals
-                </h2>
-
+                <h2 className="font-bold">Human Approvals</h2>
                 <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">
                   Pending 0
                 </span>
               </div>
-
               <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
-                <CheckCircle2
-                  size={28}
-                  className="mx-auto text-slate-300"
-                />
-
+                <CheckCircle2 size={28} className="mx-auto text-slate-300" />
                 <div className="mt-3 text-sm font-semibold text-slate-700">
                   No pending approvals
                 </div>
-
                 <div className="mt-1 text-xs text-slate-400">
                   Add an AI agent to start using approvals
                 </div>
@@ -2359,7 +2458,7 @@ export default function ControlPanel() {
         />
       )}
 
-      {/* 12-STEP CONNECT WIZARD */}
+      {/* EXISTING AGENT WIZARD */}
       {showConnectWizard && (
         <ConnectExistingWizard
           data={wizardData}
