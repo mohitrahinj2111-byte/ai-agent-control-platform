@@ -37,6 +37,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import { text } from "stream/consumers";
 
 /* ========================================================================= */
 /* TYPES                                                                     */
@@ -1848,7 +1849,7 @@ function EmptyArchitecture({
         }}
       />
 
-      <div className="absolute left-5 top-5 z-10 w-[300px] rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur">
+      <div className="absolute left-5 top-5 z-10 w-[300px] rounded-xl border border-slate-200 bg-white/95 p-4 text-slate-900 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-zinc-900/95 dark:text-white">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
             <Network size={17} />
@@ -1859,7 +1860,7 @@ function EmptyArchitecture({
           </div>
         </div>
 
-        <p className="mt-3 text-xs leading-5 text-slate-500">
+        <p className="mt-3 text-xs leading-5 text-slate-600 dark:text-gray-300">
           Your AI workforce will appear here after you add AI
           agents to your workspace.
         </p>
@@ -2152,7 +2153,7 @@ export default function ControlPanel() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f8fc] text-slate-900">
+    <main className="control-panel-theme min-h-screen bg-[#f5f8fc] text-slate-900">
       {/* TOP BAR */}
       <header className="sticky top-0 z-30 flex min-h-[68px] flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-5 py-3">
         <div className="flex w-[205px] shrink-0 items-center gap-2">
@@ -2286,7 +2287,7 @@ export default function ControlPanel() {
           </div>
 
           {/* AGENT REGISTRY */}
-          <section className="mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="cp-surface mb-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-bold">Registered Agents</h2>

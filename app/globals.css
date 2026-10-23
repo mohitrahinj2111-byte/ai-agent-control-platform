@@ -1,26 +1,205 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #171717;
+  --surface: #f8fafc;
+  --border: #e5e7eb;
+  --muted: #4b5563;
 }
 
-@theme inline {
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --surface: #18181b;
+  --border: #3f3f46;
+  --muted: #a1a1aa;
+}
+
+/* Keep theme tokens in standard CSS so editors without Tailwind at-rule support can parse them. */
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  min-height: 100%;
+}
+
+html {
+  background: var(--background);
+  color: var(--foreground);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+/* Form controls */
+input,
+textarea,
+select {
+  color: var(--foreground);
+  background-color: var(--background);
+  border-color: var(--border);
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: #a1a1aa;
+}
+
+/* Common Tailwind surfaces */
+:root[data-theme="dark"] .bg-white {
+  background-color: var(--surface) !important;
+}
+
+:root[data-theme="dark"] .bg-gray-50,
+:root[data-theme="dark"] .bg-gray-100 {
+  background-color: #27272a !important;
+}
+
+:root[data-theme="dark"] .bg-gray-200 {
+  background-color: #3f3f46 !important;
+}
+
+/* Text colors */
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .text-gray-800 {
+  color: var(--foreground) !important;
+}
+
+:root[data-theme="dark"] .text-gray-700,
+:root[data-theme="dark"] .text-gray-600,
+:root[data-theme="dark"] .text-gray-500 {
+  color: var(--muted) !important;
+}
+
+/* Borders and dividers */
+:root[data-theme="dark"] .border-gray-100,
+:root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border-gray-300 {
+  border-color: var(--border) !important;
+}
+
+:root[data-theme="dark"] .divide-gray-100 > :not(:last-child),
+:root[data-theme="dark"] .divide-gray-200 > :not(:last-child) {
+  border-color: var(--border) !important;
+}
+
+/* Common hover states */
+:root[data-theme="dark"] .hover\:bg-gray-50:hover,
+:root[data-theme="dark"] .hover\:bg-gray-100:hover {
+  background-color: #3f3f46 !important;
+}
+
+/* Smooth theme transitions */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 180ms;
+  transition-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+  }
+}
+
+/* Global dark theme corrections */
+:root[data-theme="dark"] body {
+  background-color: #09090b;
+  color: #f4f4f5;
+}
+
+/* Light backgrounds become dark */
+:root[data-theme="dark"] .bg-white,
+:root[data-theme="dark"] .bg-gray-50,
+:root[data-theme="dark"] .bg-slate-50,
+:root[data-theme="dark"] .bg-slate-100,
+:root[data-theme="dark"] .bg-zinc-50,
+:root[data-theme="dark"] .bg-neutral-50 {
+  background-color: #18181b !important;
+}
+
+/* Main text becomes readable */
+:root[data-theme="dark"] .text-black,
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .text-gray-800,
+:root[data-theme="dark"] .text-gray-700,
+:root[data-theme="dark"] .text-slate-900,
+:root[data-theme="dark"] .text-slate-800,
+:root[data-theme="dark"] .text-zinc-900 {
+  color: #f4f4f5 !important;
+}
+
+/* Secondary text remains readable */
+:root[data-theme="dark"] .text-gray-600,
+:root[data-theme="dark"] .text-gray-500,
+:root[data-theme="dark"] .text-slate-600,
+:root[data-theme="dark"] .text-slate-500,
+:root[data-theme="dark"] .text-zinc-600,
+:root[data-theme="dark"] .text-zinc-500 {
+  color: #d4d4d8 !important;
+}
+
+/* Cards, borders and form fields */
+:root[data-theme="dark"] .border-gray-100,
+:root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border-slate-200,
+:root[data-theme="dark"] .border-zinc-200 {
+  border-color: #3f3f46 !important;
+}
+
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+  background-color: #18181b;
+  color: #f4f4f5;
+  border-color: #3f3f46;
+}
+
+:root[data-theme="dark"] input::placeholder,
+:root[data-theme="dark"] textarea::placeholder {
+  color: #a1a1aa;
+}
+
+/* Control Panel: consistent dark theme */
+:root[data-theme="dark"] .control-panel-theme {
+  background-color: #09090b;
+  color: #f4f4f5;
+}
+
+:root[data-theme="dark"] .control-panel-theme .cp-surface {
+  background-color: #18181b !important;
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
+}
+
+:root[data-theme="dark"] .control-panel-theme .cp-muted {
+  color: #d4d4d8 !important;
+}
+
+:root[data-theme="dark"] .control-panel-theme .cp-input {
+  background-color: #18181b !important;
+  color: #f4f4f5 !important;
+  border-color: #52525b !important;
+}
+
+:root[data-theme="dark"] .control-panel-theme .cp-soft {
+  background-color: #27272a !important;
+  color: #f4f4f5 !important;
+  border-color: #3f3f46 !important;
 }
