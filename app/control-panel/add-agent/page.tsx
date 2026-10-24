@@ -761,8 +761,7 @@ export default function AddAgentPage() {
   /* ========================================================================= */
 
   return (
-    <main className="min-h-screen bg-[#f5f8fc] text-slate-900">
-
+    <main className="wizard-theme min-h-screen bg-[#f5f8fc] text-slate-900">
       {/* =================================================================== */}
       {/* HEADER                                                              */}
       {/* =================================================================== */}

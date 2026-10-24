@@ -203,3 +203,127 @@ select {
   color: #f4f4f5 !important;
   border-color: #3f3f46 !important;
 }
+
+/* =========================================================
+   SOFT PREMIUM DARK THEME — AI Agent Wizard
+   ========================================================= */
+
+:root[data-theme="dark"] .wizard-theme {
+  --wiz-page: #161e2d;
+  --wiz-surface: #202b3d;
+  --wiz-surface-soft: #263449;
+  --wiz-text: #edf2fa;
+  --wiz-muted: #b5c1d3;
+  --wiz-border: #3a4960;
+  --wiz-input: #1a2638;
+  --wiz-input-text: #edf2fa;
+  --wiz-step: #2a394f;
+  --wiz-step-text: #e0e9f6;
+  --wiz-info: #293b55;
+  --wiz-info-text: #d2e1ff;
+
+  background: var(--wiz-page) !important;
+  color: var(--wiz-text);
+}
+
+/* Main panel */
+:root[data-theme="dark"] .wizard-theme > div > div {
+  background: var(--wiz-surface) !important;
+  border-color: var(--wiz-border) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
+
+/* Header, sections and footer */
+:root[data-theme="dark"] .wizard-theme header,
+:root[data-theme="dark"] .wizard-theme section,
+:root[data-theme="dark"] .wizard-theme footer {
+  background-color: var(--wiz-surface) !important;
+  border-color: var(--wiz-border) !important;
+}
+
+/* Normal step cards */
+:root[data-theme="dark"] .wizard-theme button.border-slate-200 {
+  background-color: var(--wiz-step) !important;
+  border-color: var(--wiz-border) !important;
+  color: var(--wiz-step-text) !important;
+}
+
+/* Normal step number */
+:root[data-theme="dark"] .wizard-theme button.border-slate-200 .bg-slate-200 {
+  background-color: #3a4b64 !important;
+  color: #edf2fa !important;
+}
+
+/* Active step */
+:root[data-theme="dark"] .wizard-theme button.border-blue-600 {
+  background-color: #416fc1 !important;
+  border-color: #6d94dc !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(65, 111, 193, 0.16);
+}
+
+/* Active step number */
+:root[data-theme="dark"] .wizard-theme button.border-blue-600 .bg-white {
+  background-color: #e8efff !important;
+  color: #315a9e !important;
+}
+
+/* Completed steps */
+:root[data-theme="dark"] .wizard-theme button.border-blue-200 {
+  background-color: #293b52 !important;
+  border-color: #496486 !important;
+  color: #e0eaff !important;
+}
+
+/* Form controls */
+:root[data-theme="dark"] .wizard-theme input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+:root[data-theme="dark"] .wizard-theme textarea,
+:root[data-theme="dark"] .wizard-theme select {
+  background-color: var(--wiz-input) !important;
+  color: var(--wiz-input-text) !important;
+  border-color: var(--wiz-border) !important;
+}
+
+/* Placeholder text */
+:root[data-theme="dark"] .wizard-theme input::placeholder,
+:root[data-theme="dark"] .wizard-theme textarea::placeholder {
+  color: #9aaac0 !important;
+}
+
+/* Information panels */
+:root[data-theme="dark"] .wizard-theme .bg-blue-50 {
+  background-color: var(--wiz-info) !important;
+}
+
+:root[data-theme="dark"] .wizard-theme .text-blue-900,
+:root[data-theme="dark"] .wizard-theme .text-blue-800,
+:root[data-theme="dark"] .wizard-theme .text-blue-700 {
+  color: var(--wiz-info-text) !important;
+}
+
+/* General readable text */
+:root[data-theme="dark"] .wizard-theme .text-slate-900,
+:root[data-theme="dark"] .wizard-theme .text-slate-800,
+:root[data-theme="dark"] .wizard-theme .text-slate-700 {
+  color: var(--wiz-text) !important;
+}
+
+:root[data-theme="dark"] .wizard-theme .text-slate-600,
+:root[data-theme="dark"] .wizard-theme .text-slate-500 {
+  color: var(--wiz-muted) !important;
+}
+
+/* Focus state */
+:root[data-theme="dark"] .wizard-theme input:focus,
+:root[data-theme="dark"] .wizard-theme textarea:focus,
+:root[data-theme="dark"] .wizard-theme select:focus {
+  border-color: #83a5e6 !important;
+  box-shadow: 0 0 0 2px rgba(131, 165, 230, 0.16);
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-theme {
+    transition: none !important;
+  }
+}

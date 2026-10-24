@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 
 type ThemeContextValue = {
   theme: Theme;
@@ -20,24 +20,47 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(
   undefined
 );
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
+const THEME_STORAGE_KEY = "site-theme";
+
+function isTheme(value: string | null): value is Theme {
+  return value === "light" || value === "dark";
+}
+
+export function ThemeProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const [theme, setThemeState] = useState<Theme>("light");
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("site-theme");
-    const initialTheme: Theme =
-      savedTheme === "dark" ? "dark" : "light";
+    let initialTheme: Theme = "light";
 
-    setThemeState(initialTheme);
+    try {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+
+      if (isTheme(savedTheme)) {
+        initialTheme = savedTheme;
+      }
+    } catch (error) {
+      console.warn("Unable to read saved theme:", error);
+    }
+
     document.documentElement.dataset.theme = initialTheme;
+    setThemeState(initialTheme);
     setLoaded(true);
   }, []);
 
   const setTheme = useCallback((nextTheme: Theme) => {
-    localStorage.setItem("site-theme", nextTheme);
     document.documentElement.dataset.theme = nextTheme;
     setThemeState(nextTheme);
+
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch (error) {
+      console.warn("Unable to save theme preference:", error);
+    }
   }, []);
 
   return (
@@ -49,10 +72,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
   const context = useContext(ThemeContext);
 
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useTheme must be used inside ThemeProvider");
   }
 

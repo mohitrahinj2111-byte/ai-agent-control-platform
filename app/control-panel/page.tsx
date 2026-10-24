@@ -2156,6 +2156,14 @@ export default function ControlPanel() {
     <main className="control-panel-theme min-h-screen bg-[#f5f8fc] text-slate-900">
       {/* TOP BAR */}
       <header className="sticky top-0 z-30 flex min-h-[68px] flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-5 py-3">
+        <button
+        type="button"
+       onClick={() => router.push("/")}
+       className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-blue-700 bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:border-blue-800 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        <ArrowLeft size={16} />
+        <span>Back to Home</span>
+        </button>
         <div className="flex w-[205px] shrink-0 items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
             <Bot size={22} />
