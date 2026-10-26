@@ -9,10 +9,13 @@ import {
   Bot,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   CircleDot,
   Clock3,
   FileText,
   Link2,
+  LogIn,
+  LogOut,
   Network,
   Plus,
   Search,
@@ -22,6 +25,7 @@ import {
   ShieldCheck,
   Upload,
   UserCircle,
+  UserPlus,
   Users,
   Wrench,
   X,
@@ -37,7 +41,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { text } from "stream/consumers";
+import { createClient } from "@/lib/client";
 
 /* ========================================================================= */
 /* TYPES                                                                     */
@@ -2062,6 +2066,11 @@ type AgentRecord = {
 export default function ControlPanel() {
   const router = useRouter();
 
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
+
   const [agents, setAgents] = useState<AgentRecord[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(true);
   const [agentsError, setAgentsError] = useState("");
@@ -2079,6 +2088,52 @@ export default function ControlPanel() {
   ];
 
   useEffect(() => {
+  const supabase = createClient();
+  let active = true;
+
+  async function loadUser() {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (!active) return;
+
+      setAccountEmail(
+        !error && data.user ? data.user.email ?? null : null
+      );
+    } catch {
+      if (active) {
+        setAccountEmail(null);
+      }
+    } finally {
+      if (active) {
+        setAuthReady(true);
+      }
+    }
+  }
+
+  void loadUser();
+
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    if (!active) return;
+
+    setAccountEmail(session?.user.email ?? null);
+
+    if (!session?.user) {
+      setAccountMenuOpen(false);
+    }
+
+    setAuthReady(true);
+  });
+
+  return () => {
+    active = false;
+    subscription.unsubscribe();
+  };
+}, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function fetchAgents() {
@@ -2086,9 +2141,8 @@ export default function ControlPanel() {
         setAgentsLoading(true);
         setAgentsError("");
 
-        const response = await fetch(
-          "https://ai-agent-control-platform.onrender.com/api/agents"
-        );
+        const response = await fetch( "https://ai-agent-control-platform.onrender.com/api/agents" );
+    
 
         if (!response.ok) {
           throw new Error(`Request failed: ${response.status}`);
@@ -2113,7 +2167,7 @@ export default function ControlPanel() {
 
         if (!cancelled) {
           setAgentsError(
-            "Agents load nahi ho paaye. Backend connection check karo."
+            "Please wait while we load your agents..."
           );
         }
       } finally {
@@ -2129,6 +2183,33 @@ export default function ControlPanel() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+  if (!accountMenuOpen) return;
+
+  const handlePointerDown = (event: MouseEvent) => {
+    if (
+      accountMenuRef.current &&
+      !accountMenuRef.current.contains(event.target as Node)
+    ) {
+      setAccountMenuOpen(false);
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      setAccountMenuOpen(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handlePointerDown);
+  document.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    document.removeEventListener("mousedown", handlePointerDown);
+    document.removeEventListener("keydown", handleKeyDown);
+  };
+}, [accountMenuOpen]);
 
   const openAddAgent = () => {
     router.push("/control-panel/add-agent");
@@ -2211,24 +2292,119 @@ export default function ControlPanel() {
           />
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+        {accountEmail ? (
+      <div className="relative" ref={accountMenuRef}>
+      <button
+        type="button"
+        onClick={() => setAccountMenuOpen((open) => !open)}
+        className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-100"
+        aria-expanded={accountMenuOpen}
+        aria-haspopup="menu"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+          {accountEmail.charAt(0).toUpperCase()}
+        </div>
+
+        <div className="hidden min-w-0 text-left text-xs lg:block">
+          <div className="max-w-[180px] truncate font-semibold text-slate-900">
+            {accountEmail}
+          </div>
+          <div className="text-slate-500">Your Account</div>
+        </div>
+
+        <ChevronDown className="h-4 w-4 text-slate-500" />
+      </button>
+
+      {accountMenuOpen && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
+        >
+          {[
+            { label: "Control Panel", href: "/control-panel" },
+            { label: "About Us", href: "/about" },
+            { label: "Contact", href: "/contact" },
+            { label: "Settings", href: "/settings" },
+          ].map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setAccountMenuOpen(false);
+                router.push(item.href);
+              }}
+              className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+            >
+              {item.label}
+            </button>
+          ))}
+
+          <div className="my-2 border-t border-slate-200" />
+
           <button
             type="button"
-            className="relative rounded-lg p-2 hover:bg-slate-100"
-            aria-label="Activity"
+            role="menuitem"
+            onClick={() => {
+              setAccountMenuOpen(false);
+              router.push("/login?mode=add-account");
+            }}
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
           >
-            <Activity size={20} />
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-slate-300" />
+            Add Account
           </button>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-white">
-            <UserCircle size={22} />
-          </div>
-          <div className="hidden text-xs lg:block">
-            <div className="font-semibold">Admin</div>
-            <div className="text-slate-500">Workspace</div>
-          </div>
-        </div>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setAccountMenuOpen(false);
+              router.push("/login");
+            }}
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+          >
+            Switch Account
+          </button>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setAccountMenuOpen(false);
+              setAccountEmail("");
+              router.push("/login");
+            }}
+            className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+          >
+            <span className="inline-flex items-center gap-2">
+               <LogOut className="h-4 w-4" />
+              Logout
+              </span>
+           </button>
+         </div>
+       )}
+     </div>
+    ) : (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={() => router.push("/login")}
+        className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+      >
+        Login
+      </button>
+
+      <button
+        type="button"
+        onClick={() => router.push("/signup")}
+        className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+      >
+        Sign Up
+      </button>
+    </div>
+  )}
+</div>
       </header>
 
       <div className="flex">
