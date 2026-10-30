@@ -54,6 +54,10 @@ type AgentInput = {
   configuration?: JsonObject;
 };
 
+type AuthenticatedUser = {
+  id: string;
+};
+
 function isObject(value: unknown): value is JsonObject {
   return (
     typeof value === "object" &&
@@ -152,6 +156,49 @@ function sendError(
   });
 }
 
+/**
+ * Verify the Supabase access token.
+ * The user ID is always obtained from Supabase,
+ * never trusted from the request body.
+ */
+async function authenticateRequest(
+  request: FastifyRequest,
+): Promise<AuthenticatedUser | null> {
+  const authorization = request.headers.authorization;
+
+  if (!authorization?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const token = authorization.slice(7).trim();
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data.user) {
+      request.log.warn(
+        { message: error?.message },
+        "Authentication failed",
+      );
+      return null;
+    }
+
+    return {
+      id: data.user.id,
+    };
+  } catch (error) {
+    request.log.error(
+      { err: error },
+      "Unexpected authentication error",
+    );
+    return null;
+  }
+}
+
 async function registerRoutes(): Promise<void> {
   await app.register(cors, {
     origin(origin, callback) {
@@ -177,30 +224,20 @@ async function registerRoutes(): Promise<void> {
         false,
       );
     },
-
     methods: ["GET", "POST", "OPTIONS"],
-
     allowedHeaders: [
       "Content-Type",
       "Authorization",
     ],
   });
 
-  // ---------------------------------------------------------
-  // BASIC HEALTH CHECK
   // GET /health
-  // ---------------------------------------------------------
-
   app.get("/health", async () => ({
     status: "ok",
     service: "ai-agent-control-backend",
   }));
 
-  // ---------------------------------------------------------
-  // DATABASE HEALTH CHECK
   // GET /health/db
-  // ---------------------------------------------------------
-
   app.get(
     "/health/db",
     async (_request: FastifyRequest, reply: FastifyReply) => {
@@ -215,10 +252,8 @@ async function registerRoutes(): Promise<void> {
             {
               code: error.code,
               message: error.message,
-              details: error.details,
-              hint: error.hint,
             },
-            "DATABASE HEALTH CHECK FAILED",
+            "Database health check failed",
           );
 
           return reply.code(503).send({
@@ -235,7 +270,7 @@ async function registerRoutes(): Promise<void> {
       } catch (error) {
         app.log.error(
           { err: error },
-          "UNEXPECTED DATABASE HEALTH CHECK ERROR",
+          "Unexpected database health check error",
         );
 
         return reply.code(503).send({
@@ -247,11 +282,7 @@ async function registerRoutes(): Promise<void> {
     },
   );
 
-  // ---------------------------------------------------------
-  // WIZARD CONTINUE LOG
   // POST /api/wizard/continue
-  // ---------------------------------------------------------
-
   app.post(
     "/api/wizard/continue",
     async (
@@ -259,9 +290,7 @@ async function registerRoutes(): Promise<void> {
       reply: FastifyReply,
     ) => {
       request.log.info(
-        {
-          timestamp: new Date().toISOString(),
-        },
+        { timestamp: new Date().toISOString() },
         "[WIZARD] Continue button clicked",
       );
 
@@ -272,17 +301,24 @@ async function registerRoutes(): Promise<void> {
     },
   );
 
-  // ---------------------------------------------------------
-  // CREATE AGENT
   // POST /api/agents
-  // ---------------------------------------------------------
-
+  // Creates an agent owned by the authenticated user.
   app.post(
     "/api/agents",
     async (
       request: FastifyRequest,
       reply: FastifyReply,
     ) => {
+      const user = await authenticateRequest(request);
+
+      if (!user) {
+        return sendError(
+          reply,
+          401,
+          "Authentication required. Please sign in again.",
+        );
+      }
+
       const validation = getAgentInput(request.body);
 
       if (!validation.data) {
@@ -300,6 +336,7 @@ async function registerRoutes(): Promise<void> {
       try {
         record = {
           agent_id: `agt_${randomUUID()}`,
+          user_id: user.id,
           agent_name: agent.agent_name,
           description: toDbValue(agent.description),
           department: toDbValue(agent.department),
@@ -311,7 +348,6 @@ async function registerRoutes(): Promise<void> {
             agent.connection_method,
           ),
           capability: toDbValue(agent.capability),
-
           permission: agent.permission ?? null,
           tools: agent.tools ?? null,
           policies: agent.policies ?? null,
@@ -320,13 +356,12 @@ async function registerRoutes(): Promise<void> {
           limitations: agent.limitations ?? null,
           terms_and_conditions:
             agent.terms_and_conditions ?? null,
-
           configuration: agent.configuration ?? {},
         };
       } catch (error) {
         request.log.error(
           { err: error },
-          "AGENT INPUT SERIALIZATION FAILED",
+          "Agent input serialization failed",
         );
 
         return sendError(
@@ -351,22 +386,22 @@ async function registerRoutes(): Promise<void> {
               details: error.details,
               hint: error.hint,
             },
-            "AGENT SAVE ERROR",
+            "Agent save error",
           );
 
           return sendError(
             reply,
             500,
-            "Failed to create agent. Check backend logs for the database error.",
+            "Failed to create agent. Check backend logs.",
           );
         }
 
         request.log.info(
           {
             agent_id: data.agent_id,
-            agent_name: data.agent_name,
+            user_id: user.id,
           },
-          "AGENT SAVED SUCCESSFULLY",
+          "Agent saved successfully",
         );
 
         return reply.code(201).send({
@@ -377,7 +412,7 @@ async function registerRoutes(): Promise<void> {
       } catch (error) {
         request.log.error(
           { err: error },
-          "UNEXPECTED AGENT SAVE ERROR",
+          "Unexpected agent save error",
         );
 
         return sendError(
@@ -389,21 +424,29 @@ async function registerRoutes(): Promise<void> {
     },
   );
 
-  // ---------------------------------------------------------
-  // GET ALL AGENTS
   // GET /api/agents
-  // ---------------------------------------------------------
-
+  // Returns only agents owned by the authenticated user.
   app.get(
     "/api/agents",
     async (
       request: FastifyRequest,
       reply: FastifyReply,
     ) => {
+      const user = await authenticateRequest(request);
+
+      if (!user) {
+        return sendError(
+          reply,
+          401,
+          "Authentication required. Please sign in again.",
+        );
+      }
+
       try {
         const { data, error } = await supabase
           .from("agent_data")
           .select("*")
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -414,7 +457,7 @@ async function registerRoutes(): Promise<void> {
               details: error.details,
               hint: error.hint,
             },
-            "FETCH AGENTS ERROR",
+            "Fetch agents error",
           );
 
           return sendError(
@@ -432,7 +475,7 @@ async function registerRoutes(): Promise<void> {
       } catch (error) {
         request.log.error(
           { err: error },
-          "UNEXPECTED FETCH AGENTS ERROR",
+          "Unexpected fetch agents error",
         );
 
         return sendError(
@@ -444,10 +487,7 @@ async function registerRoutes(): Promise<void> {
     },
   );
 
-  // ---------------------------------------------------------
-  // UNKNOWN ROUTES
-  // ---------------------------------------------------------
-
+  // Unknown routes
   app.setNotFoundHandler(
     async (request, reply) => {
       return reply.code(404).send({
@@ -458,10 +498,6 @@ async function registerRoutes(): Promise<void> {
     },
   );
 }
-
-// ---------------------------------------------------------
-// START SERVER
-// ---------------------------------------------------------
 
 async function start(): Promise<void> {
   if (
@@ -489,14 +525,10 @@ async function start(): Promise<void> {
   );
 }
 
-// ---------------------------------------------------------
-// GRACEFUL SHUTDOWN
-// ---------------------------------------------------------
-
 async function shutdown(signal: string): Promise<void> {
   app.log.info(
     { signal },
-    "SHUTTING DOWN BACKEND",
+    "Shutting down backend",
   );
 
   try {
@@ -504,7 +536,7 @@ async function shutdown(signal: string): Promise<void> {
   } catch (error) {
     app.log.error(
       { err: error },
-      "SERVER SHUTDOWN ERROR",
+      "Server shutdown error",
     );
 
     process.exitCode = 1;
@@ -522,7 +554,7 @@ process.once("SIGTERM", () => {
 start().catch(async (error: unknown) => {
   app.log.error(
     { err: error },
-    "BACKEND START FAILED",
+    "Backend start failed",
   );
 
   try {

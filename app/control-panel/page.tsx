@@ -42,6 +42,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/client";
+import AgentWorkspace from "@/components/AgentWorkspace/AgentWorkspace";
+
 
 /* ========================================================================= */
 /* TYPES                                                                     */
@@ -2141,7 +2143,25 @@ export default function ControlPanel() {
         setAgentsLoading(true);
         setAgentsError("");
 
-        const response = await fetch( "https://ai-agent-control-platform.onrender.com/api/agents" );
+        const supabase = createClient();
+
+        const {
+         data: { session },
+         error: sessionError,
+        } = await supabase.auth.getSession();
+
+         if (sessionError || !session?.access_token) {
+          throw new Error("Session missing. Please sign in again.");
+        }
+
+         const response = await fetch("https://ai-agent-control-platform.onrender.com/api/agents",
+        {
+         headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+         cache: "no-store",
+         }
+        );
     
 
         if (!response.ok) {
@@ -2163,7 +2183,7 @@ export default function ControlPanel() {
           setAgents(result.agents as AgentRecord[]);
         }
       } catch (error) {
-        console.error("Failed to fetch agents:", error);
+        console.warn("Failed to fetch agents:", error);
 
         if (!cancelled) {
           setAgentsError(
@@ -2184,32 +2204,33 @@ export default function ControlPanel() {
     };
   }, []);
 
+  // Close the account menu when clicking outside or pressing Escape.
   useEffect(() => {
-  if (!accountMenuOpen) return;
+    if (!accountMenuOpen) return;
 
-  const handlePointerDown = (event: MouseEvent) => {
-    if (
-      accountMenuRef.current &&
-      !accountMenuRef.current.contains(event.target as Node)
-    ) {
-      setAccountMenuOpen(false);
-    }
-  };
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setAccountMenuOpen(false);
+      }
+    };
 
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
-      setAccountMenuOpen(false);
-    }
-  };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setAccountMenuOpen(false);
+      }
+    };
 
-  document.addEventListener("mousedown", handlePointerDown);
-  document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
 
-  return () => {
-    document.removeEventListener("mousedown", handlePointerDown);
-    document.removeEventListener("keydown", handleKeyDown);
-  };
-}, [accountMenuOpen]);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [accountMenuOpen]);
 
   const openAddAgent = () => {
     router.push("/control-panel/add-agent");
@@ -2228,9 +2249,116 @@ export default function ControlPanel() {
     setWizardData(createInitialWizardData());
   };
 
-  const finishWizard = () => {
-    console.log("Existing agent configuration:", wizardData);
-    closeWizard();
+  // Save the configured agent to the backend and update the Control Panel.
+  const finishWizard = async () => {
+    try {
+      const supabase = createClient();
+
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError || !session?.access_token) {
+        throw new Error("Session expired. Please sign in again.");
+      }
+
+      const payload = {
+        agent_name: wizardData.agentName.trim(),
+        description: wizardData.agentRole,
+        department: wizardData.department,
+        runtime: wizardData.runtime,
+        connection_endpoint: wizardData.connectionEndpoint,
+        connection_method: wizardData.connectionMethod,
+        capability: wizardData.capabilities,
+        permission: wizardData.permissions,
+        tools: wizardData.tools,
+        policies: wizardData.policies,
+        data_security: wizardData.dataSecurity,
+        documents: wizardData.documents.map((file) => file.name),
+        limitations: wizardData.limitations,
+        terms_and_conditions: wizardData.terms,
+        configuration: {
+          custom_policy: wizardData.customPolicy,
+          custom_data_security: wizardData.customDataSecurity,
+          custom_tool_files: wizardData.customTools.map(
+            (file) => file.name
+          ),
+          policy_files: wizardData.policyFiles.map(
+            (file) => file.name
+          ),
+          data_security_files: wizardData.dataSecurityFiles.map(
+            (file) => file.name
+          ),
+          terms_files: wizardData.termsFiles.map(
+            (file) => file.name
+          ),
+          final_notes: wizardData.finalNotes,
+        },
+      };
+
+      if (!payload.agent_name) {
+        throw new Error("Agent name is required.");
+      }
+
+      const response = await fetch(
+        "https://ai-agent-control-platform.onrender.com/api/agents",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const result: unknown = await response.json();
+
+      if (!response.ok) {
+        const message =
+          typeof result === "object" &&
+          result !== null &&
+          "message" in result &&
+          typeof result.message === "string"
+            ? result.message
+            : `Agent save failed: ${response.status}`;
+
+        throw new Error(message);
+      }
+
+      if (
+        typeof result !== "object" ||
+        result === null ||
+        !("agent" in result) ||
+        typeof result.agent !== "object" ||
+        result.agent === null
+      ) {
+        throw new Error("Invalid response received from backend.");
+      }
+
+      const savedAgent = result.agent as AgentRecord;
+
+      // Update the registered agents immediately.
+      setAgents((previous) => [
+        savedAgent,
+        ...previous,
+      ]);
+
+      setAgentsError("");
+
+      closeWizard();
+
+      alert("AI Agent saved successfully!");
+    } catch (error) {
+      console.error("Agent save failed:", error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to save AI Agent. Please try again."
+      );
+    }
   };
 
   return (
@@ -2238,13 +2366,14 @@ export default function ControlPanel() {
       {/* TOP BAR */}
       <header className="sticky top-0 z-30 flex min-h-[68px] flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-5 py-3">
         <button
-        type="button"
-       onClick={() => router.push("/")}
-       className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-blue-700 bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:border-blue-800 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-      >
-        <ArrowLeft size={16} />
-        <span>Back to Home</span>
+          type="button"
+          onClick={() => router.push("/")}
+          className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-blue-700 bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:border-blue-800 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Home</span>
         </button>
+
         <div className="flex w-[205px] shrink-0 items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
             <Bot size={22} />
@@ -2293,118 +2422,121 @@ export default function ControlPanel() {
         </div>
 
         <div className="flex min-w-0 items-center gap-3">
-        {accountEmail ? (
-      <div className="relative" ref={accountMenuRef}>
-      <button
-        type="button"
-        onClick={() => setAccountMenuOpen((open) => !open)}
-        className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-100"
-        aria-expanded={accountMenuOpen}
-        aria-haspopup="menu"
-      >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
-          {accountEmail.charAt(0).toUpperCase()}
+          {accountEmail ? (
+            <div className="relative" ref={accountMenuRef}>
+              <button
+                type="button"
+                onClick={() =>
+                  setAccountMenuOpen((open) => !open)
+                }
+                className="flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-slate-100"
+                aria-expanded={accountMenuOpen}
+                aria-haspopup="menu"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white">
+                  {(accountEmail ?? "U").charAt(0).toUpperCase()}
+                </div>
+
+                <div className="hidden min-w-0 text-left text-xs lg:block">
+                  <div className="max-w-[180px] truncate font-semibold text-slate-900">
+                    {accountEmail}
+                  </div>
+                  <div className="text-slate-500">Your Account</div>
+                </div>
+
+                <ChevronDown className="h-4 w-4 text-slate-500" />
+              </button>
+
+              {accountMenuOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
+                >
+                  {[
+                    { label: "Control Panel", href: "/control-panel" },
+                    { label: "About Us", href: "/about" },
+                    { label: "Contact", href: "/contact" },
+                    { label: "Settings", href: "/settings" },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setAccountMenuOpen(false);
+                        router.push(item.href);
+                      }}
+                      className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+
+                  <div className="my-2 border-t border-slate-200" />
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      router.push("/login?mode=add-account");
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                  >
+                    Add Account
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setAccountMenuOpen(false);
+                      router.push("/login");
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+                  >
+                    Switch Account
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={async () => {
+                      setAccountMenuOpen(false);
+                      await createClient().auth.signOut();
+                      setAccountEmail(null);
+                      router.push("/login");
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => router.push("/login")}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Login
+              </button>
+
+              <button
+                type="button"
+                onClick={() => router.push("/signup")}
+                className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
         </div>
-
-        <div className="hidden min-w-0 text-left text-xs lg:block">
-          <div className="max-w-[180px] truncate font-semibold text-slate-900">
-            {accountEmail}
-          </div>
-          <div className="text-slate-500">Your Account</div>
-        </div>
-
-        <ChevronDown className="h-4 w-4 text-slate-500" />
-      </button>
-
-      {accountMenuOpen && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
-        >
-          {[
-            { label: "Control Panel", href: "/control-panel" },
-            { label: "About Us", href: "/about" },
-            { label: "Contact", href: "/contact" },
-            { label: "Settings", href: "/settings" },
-          ].map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                setAccountMenuOpen(false);
-                router.push(item.href);
-              }}
-              className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-            >
-              {item.label}
-            </button>
-          ))}
-
-          <div className="my-2 border-t border-slate-200" />
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setAccountMenuOpen(false);
-              router.push("/login?mode=add-account");
-            }}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-          >
-            Add Account
-          </button>
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setAccountMenuOpen(false);
-              router.push("/login");
-            }}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
-          >
-            Switch Account
-          </button>
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              setAccountMenuOpen(false);
-              setAccountEmail("");
-              router.push("/login");
-            }}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-          >
-            <span className="inline-flex items-center gap-2">
-               <LogOut className="h-4 w-4" />
-              Logout
-              </span>
-           </button>
-         </div>
-       )}
-     </div>
-    ) : (
-    <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => router.push("/login")}
-        className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-      >
-        Login
-      </button>
-
-      <button
-        type="button"
-        onClick={() => router.push("/signup")}
-        className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-      >
-        Sign Up
-      </button>
-    </div>
-  )}
-</div>
       </header>
 
       <div className="flex">
@@ -2531,13 +2663,14 @@ export default function ControlPanel() {
 
                   return (
                     <article
-                      key={agent.id ?? `${name}-${index}`}
+                      key={String(agent.agent_id ?? agent.id ?? `${name}-${index}`)}
                       className="rounded-xl border border-slate-200 p-4"
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                           <Bot size={21} />
                         </div>
+
                         <div className="min-w-0">
                           <h3 className="break-words font-semibold">
                             {name}
@@ -2574,6 +2707,7 @@ export default function ControlPanel() {
                   Waiting
                 </span>
               </div>
+
               <div className="mt-4 space-y-4">
                 {activity.map((item) => (
                   <div key={item} className="flex gap-3">
@@ -2594,6 +2728,7 @@ export default function ControlPanel() {
                 <h2 className="font-bold">Today&apos;s Report</h2>
                 <CalendarDays size={15} className="text-slate-400" />
               </div>
+
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {[
                   ["0", "Total Tasks"],
@@ -2621,6 +2756,7 @@ export default function ControlPanel() {
                   Pending 0
                 </span>
               </div>
+
               <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
                 <CheckCircle2 size={28} className="mx-auto text-slate-300" />
                 <div className="mt-3 text-sm font-semibold text-slate-700">

@@ -13,19 +13,25 @@ const app = (0, fastify_1.default)({
 });
 const PORT = Number(process.env.PORT ?? 4000);
 const HOST = process.env.HOST ?? "0.0.0.0";
-const allowedOrigins = (process.env.CORS_ORIGINS ??
-    [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://ai-agent-control-platform.pages.dev",
-    ].join(","))
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+const DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://ai-agent-control-platform.pages.dev",
+];
+const allowedOrigins = [
+    ...new Set((process.env.CORS_ORIGINS ??
+        DEFAULT_ALLOWED_ORIGINS.join(","))
+        .split(",")
+        .map((origin) => origin.trim().replace(/\/+$/, ""))
+        .filter(Boolean)),
+];
 function isObject(value) {
     return (typeof value === "object" &&
         value !== null &&
         !Array.isArray(value));
+}
+function normalizeOrigin(origin) {
+    return origin.trim().replace(/\/+$/, "");
 }
 function toDbValue(value) {
     if (value === undefined || value === null || value === "") {
@@ -34,23 +40,23 @@ function toDbValue(value) {
     if (typeof value === "string") {
         return value;
     }
-    if (typeof value === "number" || typeof value === "boolean") {
+    if (typeof value === "number" ||
+        typeof value === "boolean") {
         return String(value);
     }
-    try {
-        return JSON.stringify(value);
-    }
-    catch {
-        throw new Error("A field contains data that cannot be serialized.");
-    }
+    return JSON.stringify(value);
 }
 function getAgentInput(body) {
     if (!isObject(body)) {
-        return { error: "Request body must be a JSON object." };
+        return {
+            error: "Request body must be a JSON object.",
+        };
     }
     if (typeof body.agent_name !== "string" ||
         body.agent_name.trim().length === 0) {
-        return { error: "agent_name is required." };
+        return {
+            error: "agent_name is required.",
+        };
     }
     if (body.agent_name.trim().length > 200) {
         return {
@@ -89,52 +95,108 @@ function sendError(reply, statusCode, message) {
         message,
     });
 }
+/**
+ * Verify the Supabase access token.
+ * The user ID is always obtained from Supabase,
+ * never trusted from the request body.
+ */
+async function authenticateRequest(request) {
+    const authorization = request.headers.authorization;
+    if (!authorization?.startsWith("Bearer ")) {
+        return null;
+    }
+    const token = authorization.slice(7).trim();
+    if (!token) {
+        return null;
+    }
+    try {
+        const { data, error } = await db_js_1.supabase.auth.getUser(token);
+        if (error || !data.user) {
+            request.log.warn({ message: error?.message }, "Authentication failed");
+            return null;
+        }
+        return {
+            id: data.user.id,
+        };
+    }
+    catch (error) {
+        request.log.error({ err: error }, "Unexpected authentication error");
+        return null;
+    }
+}
 async function registerRoutes() {
     await app.register(cors_1.default, {
-        origin: allowedOrigins,
+        origin(origin, callback) {
+            if (!origin) {
+                callback(null, true);
+                return;
+            }
+            const normalizedOrigin = normalizeOrigin(origin);
+            if (allowedOrigins.includes(normalizedOrigin)) {
+                callback(null, true);
+                return;
+            }
+            app.log.warn({ origin: normalizedOrigin }, "CORS origin rejected");
+            callback(new Error("Origin is not allowed by CORS."), false);
+        },
+        methods: ["GET", "POST", "OPTIONS"],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+        ],
     });
-    // ---------------------------------------------------------
-    // BACKEND HEALTH
     // GET /health
-    // ---------------------------------------------------------
     app.get("/health", async () => ({
         status: "ok",
         service: "ai-agent-control-backend",
     }));
-    // ---------------------------------------------------------
-    // SUPABASE HEALTH
     // GET /health/db
-    // ---------------------------------------------------------
-    app.get("/health/db", async (request, reply) => {
+    app.get("/health/db", async (_request, reply) => {
         try {
             const { error } = await db_js_1.supabase
                 .from("agent_data")
                 .select("agent_id")
                 .limit(1);
             if (error) {
-                request.log.error({
+                app.log.error({
                     code: error.code,
                     message: error.message,
-                    details: error.details,
-                    hint: error.hint,
-                }, "SUPABASE HEALTH CHECK FAILED");
-                return sendError(reply, 503, "Supabase connection or table access failed.");
+                }, "Database health check failed");
+                return reply.code(503).send({
+                    status: "error",
+                    database: "unavailable",
+                    message: "Database query failed.",
+                });
             }
-            return reply.send({
+            return {
                 status: "ok",
                 database: "connected",
-            });
+            };
         }
         catch (error) {
-            request.log.error({ err: error }, "UNEXPECTED SUPABASE HEALTH CHECK ERROR");
-            return sendError(reply, 503, "Supabase is currently unavailable.");
+            app.log.error({ err: error }, "Unexpected database health check error");
+            return reply.code(503).send({
+                status: "error",
+                database: "unavailable",
+                message: "Could not check database connection.",
+            });
         }
     });
-    // ---------------------------------------------------------
-    // CREATE AGENT
+    // POST /api/wizard/continue
+    app.post("/api/wizard/continue", async (request, reply) => {
+        request.log.info({ timestamp: new Date().toISOString() }, "[WIZARD] Continue button clicked");
+        return reply.code(200).send({
+            success: true,
+            message: "Wizard Continue request received",
+        });
+    });
     // POST /api/agents
-    // ---------------------------------------------------------
+    // Creates an agent owned by the authenticated user.
     app.post("/api/agents", async (request, reply) => {
+        const user = await authenticateRequest(request);
+        if (!user) {
+            return sendError(reply, 401, "Authentication required. Please sign in again.");
+        }
         const validation = getAgentInput(request.body);
         if (!validation.data) {
             return sendError(reply, 400, validation.error ?? "Invalid request body.");
@@ -144,6 +206,7 @@ async function registerRoutes() {
         try {
             record = {
                 agent_id: `agt_${(0, node_crypto_1.randomUUID)()}`,
+                user_id: user.id,
                 agent_name: agent.agent_name,
                 description: toDbValue(agent.description),
                 department: toDbValue(agent.department),
@@ -151,8 +214,6 @@ async function registerRoutes() {
                 connection_endpoint: toDbValue(agent.connection_endpoint),
                 connection_method: toDbValue(agent.connection_method),
                 capability: toDbValue(agent.capability),
-                // These values may be arrays/objects.
-                // Their compatibility depends on the actual database column types.
                 permission: agent.permission ?? null,
                 tools: agent.tools ?? null,
                 policies: agent.policies ?? null,
@@ -164,7 +225,7 @@ async function registerRoutes() {
             };
         }
         catch (error) {
-            request.log.error({ err: error }, "AGENT INPUT SERIALIZATION FAILED");
+            request.log.error({ err: error }, "Agent input serialization failed");
             return sendError(reply, 400, "One or more agent fields contain invalid data.");
         }
         try {
@@ -179,9 +240,13 @@ async function registerRoutes() {
                     message: error.message,
                     details: error.details,
                     hint: error.hint,
-                }, "AGENT SAVE ERROR");
-                return sendError(reply, 500, "Failed to create agent. Check database schema and permissions.");
+                }, "Agent save error");
+                return sendError(reply, 500, "Failed to create agent. Check backend logs.");
             }
+            request.log.info({
+                agent_id: data.agent_id,
+                user_id: user.id,
+            }, "Agent saved successfully");
             return reply.code(201).send({
                 status: "ok",
                 message: "Agent created successfully.",
@@ -189,19 +254,22 @@ async function registerRoutes() {
             });
         }
         catch (error) {
-            request.log.error({ err: error }, "UNEXPECTED AGENT SAVE ERROR");
+            request.log.error({ err: error }, "Unexpected agent save error");
             return sendError(reply, 500, "Failed to create agent.");
         }
     });
-    // ---------------------------------------------------------
-    // GET ALL AGENTS
     // GET /api/agents
-    // ---------------------------------------------------------
+    // Returns only agents owned by the authenticated user.
     app.get("/api/agents", async (request, reply) => {
+        const user = await authenticateRequest(request);
+        if (!user) {
+            return sendError(reply, 401, "Authentication required. Please sign in again.");
+        }
         try {
             const { data, error } = await db_js_1.supabase
                 .from("agent_data")
                 .select("*")
+                .eq("user_id", user.id)
                 .order("created_at", { ascending: false });
             if (error) {
                 request.log.error({
@@ -209,8 +277,8 @@ async function registerRoutes() {
                     message: error.message,
                     details: error.details,
                     hint: error.hint,
-                }, "FETCH AGENTS ERROR");
-                return sendError(reply, 500, "Failed to fetch agents. Check database schema and permissions.");
+                }, "Fetch agents error");
+                return sendError(reply, 500, "Failed to fetch agents. Check backend logs.");
             }
             return reply.send({
                 status: "ok",
@@ -219,14 +287,19 @@ async function registerRoutes() {
             });
         }
         catch (error) {
-            request.log.error({ err: error }, "UNEXPECTED FETCH AGENTS ERROR");
+            request.log.error({ err: error }, "Unexpected fetch agents error");
             return sendError(reply, 500, "Failed to fetch agents.");
         }
     });
+    // Unknown routes
+    app.setNotFoundHandler(async (request, reply) => {
+        return reply.code(404).send({
+            status: "error",
+            message: "Route not found.",
+            path: request.url,
+        });
+    });
 }
-// ---------------------------------------------------------
-// START SERVER
-// ---------------------------------------------------------
 async function start() {
     if (!Number.isInteger(PORT) ||
         PORT < 1 ||
@@ -238,18 +311,19 @@ async function start() {
         port: PORT,
         host: HOST,
     });
-    app.log.info(`Backend running at http://${HOST}:${PORT}`);
+    app.log.info({
+        host: HOST,
+        port: PORT,
+        allowedOrigins,
+    }, "AI Agent Control Backend started");
 }
-// ---------------------------------------------------------
-// GRACEFUL SHUTDOWN
-// ---------------------------------------------------------
 async function shutdown(signal) {
-    app.log.info({ signal }, "SHUTTING DOWN BACKEND");
+    app.log.info({ signal }, "Shutting down backend");
     try {
         await app.close();
     }
     catch (error) {
-        app.log.error({ err: error }, "SERVER SHUTDOWN ERROR");
+        app.log.error({ err: error }, "Server shutdown error");
         process.exitCode = 1;
     }
 }
@@ -260,12 +334,12 @@ process.once("SIGTERM", () => {
     void shutdown("SIGTERM");
 });
 start().catch(async (error) => {
-    app.log.error({ err: error }, "BACKEND START FAILED");
+    app.log.error({ err: error }, "Backend start failed");
     try {
         await app.close();
     }
     catch {
-        // Ignore errors if the server did not start.
+        // Ignore close errors if the server never started.
     }
     process.exitCode = 1;
 });

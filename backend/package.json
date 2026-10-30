@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "backend",
   "version": "1.0.0",
   "description": "AI Agent Control Platform Backend",
