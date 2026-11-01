@@ -185,7 +185,7 @@ export default function Home() {
               Home
             </Link>
             <Link
-              href="/control-panel"
+              href="/agent-management"
               className="whitespace-nowrap hover:text-blue-500"
             >
               Control Panel
@@ -265,7 +265,7 @@ export default function Home() {
 
                     <Link
                       role="menuitem"
-                      href="/control-panel"
+                      href="/agent-management"
                       onClick={() => setAccountMenuOpen(false)}
                       className="flex rounded-lg px-3 py-3 text-sm hover:bg-[var(--surface)]"
                     >
@@ -382,7 +382,7 @@ export default function Home() {
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/control-panel"
+                href="/agent-management"
                 className="inline-flex items-center justify-center gap-3 rounded-xl bg-blue-600 px-6 py-4 font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
               >
                 Open Control Panel <ArrowRight size={18} />

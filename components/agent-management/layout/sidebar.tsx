@@ -119,7 +119,7 @@ export default function Sidebar() {
       {/* Add Agent */}
       <div className="border-t border-white/10 p-4">
         <Link
-          href="/control-panel/add-agent"
+          href="/agent-management/add-agent"
           className="flex items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-black transition hover:bg-cyan-400"
         >
           <Plus size={18} />

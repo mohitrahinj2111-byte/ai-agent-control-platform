@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/client";
 import type { ChangeEvent } from "react";
 
 import {
@@ -256,6 +258,9 @@ function filesFromInput(
 /* ========================================================================= */
 
 export default function AddAgentPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
   const [step, setStep] = useState(0);
   const [data, setData] = useState<AgentData>(initialData);
   const [error, setError] = useState("");
@@ -653,66 +658,78 @@ export default function AddAgentPage() {
   /* ----------------------------------------------------------------------- */
 
   const handleConnect = async () => {
-  console.log("[Agent Wizard] Connect button clicked");
-
   const validationError = validateStep();
 
   if (validationError) {
-    console.error("[Agent Wizard] Validation failed:", validationError);
     setError(validationError);
     return;
   }
 
   setError("");
 
-  const payload = {
-    agent_name: data.agentName.trim(),
-    description: data.description.trim(),
-    department: data.department,
-    runtime: data.runtime,
-    connection_endpoint: data.endpoint.trim(),
-    connection_method: data.connectionType,
+  try {
+    // 1. Get authenticated Supabase session
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
 
-    configuration: {
-      agentName: data.agentName.trim(),
-      description: data.description,
-      role: data.role,
+    if (sessionError) {
+      throw new Error(sessionError.message);
+    }
+
+    if (!session?.access_token) {
+      throw new Error("Please login again. Your session is missing.");
+    }
+
+    // 2. Prepare agent data
+    const payload = {
+      agent_name: data.agentName.trim(),
+      description: data.description.trim(),
       department: data.department,
       runtime: data.runtime,
-      connectionType: data.connectionType,
-      endpoint: data.endpoint,
-      capabilities: data.capabilities,
-      permissions: data.permissions,
-      tools: data.tools,
-      customToolInstructions: data.customToolInstructions,
-      customToolFiles: data.customToolFiles,
-      policies: data.policies,
-      companyPolicies: data.companyPolicies,
-      dataSecurity: data.dataSecurity,
-      dataSecurityInstructions: data.dataSecurityInstructions,
-      documents: data.documents,
-      limitations: data.limitations,
-      terms: data.terms,
-      termsFiles: data.termsFiles,
-      confirmed: data.confirmed,
-    },
-  };
+      connection_endpoint: data.endpoint.trim(),
+      connection_method: data.connectionType,
 
-  try {
-    console.log("[Agent Wizard] Sending POST request");
-
-    const response = await fetch("https://ai-agent-control-platform.onrender.com/api/agents", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+      configuration: {
+        agentName: data.agentName.trim(),
+        description: data.description,
+        role: data.role,
+        department: data.department,
+        runtime: data.runtime,
+        connectionType: data.connectionType,
+        endpoint: data.endpoint,
+        capabilities: data.capabilities,
+        permissions: data.permissions,
+        tools: data.tools,
+        customToolInstructions: data.customToolInstructions,
+        customToolFiles: data.customToolFiles,
+        policies: data.policies,
+        companyPolicies: data.companyPolicies,
+        dataSecurity: data.dataSecurity,
+        dataSecurityInstructions: data.dataSecurityInstructions,
+        documents: data.documents,
+        limitations: data.limitations,
+        terms: data.terms,
+        termsFiles: data.termsFiles,
+        confirmed: data.confirmed,
       },
-      body: JSON.stringify(payload),
-    });
+    };
+
+    // 3. Send authenticated request to backend
+    const response = await fetch(
+      "https://ai-agent-control-platform.onrender.com/api/agents",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
     const responseText = await response.text();
-
-    console.log("[Agent Wizard] HTTP status:", response.status);
-    console.log("[Agent Wizard] Response body:", responseText);
 
     let result: Record<string, unknown> | null = null;
 
@@ -728,29 +745,34 @@ export default function AddAgentPage() {
           result = parsed as Record<string, unknown>;
         }
       } catch {
-        // Response is not JSON. The raw response is logged above.
+        // Non-JSON response
       }
     }
 
+    // 4. Handle backend errors
     if (!response.ok) {
-      const message =
-        result?.error ??
-        result?.message ??
-        `Server returned HTTP ${response.status}`;
-
-      throw new Error(String(message));
+      throw new Error(
+        String(
+          result?.error ??
+          result?.message ??
+          `Server error: ${response.status}`
+        )
+      );
     }
 
-    console.log("[Agent Wizard] Agent saved:", result);
-
+    // 5. Success
     alert("AI Agent saved successfully!");
+
+    router.push("/control-panel");
+    router.refresh();
+
   } catch (error) {
-    console.error("[Agent Wizard] Request failed:", error);
+    console.error("[Agent Wizard] Save failed:", error);
 
     setError(
       error instanceof Error
         ? error.message
-        : "Request failed. Check the browser console and backend logs.",
+        : "Unable to save AI Agent."
     );
   }
 };
