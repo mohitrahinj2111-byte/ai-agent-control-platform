@@ -1,30 +1,78 @@
 @import "tailwindcss";
 
-:root {
-  color-scheme: light;
-  --background: #ffffff;
-  --foreground: #171717;
-  --surface: #f8fafc;
-  --border: #e5e7eb;
-  --muted: #4b5563;
-}
+/* =====================================================
+   TAILWIND CSS V4 THEME TOKENS
+   ===================================================== */
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --background: #09090b;
-  --foreground: #f4f4f5;
-  --surface: #18181b;
-  --border: #3f3f46;
-  --muted: #a1a1aa;
-}
-
-/* Keep theme tokens in standard CSS so editors without Tailwind at-rule support can parse them. */
-:root {
+/* stylelint-disable at-rule-no-unknown */
+@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+/* stylelint-enable at-rule-no-unknown */
+
+/* =====================================================
+   LIGHT THEME — DEFAULT
+   ===================================================== */
+
+:root {
+  color-scheme: light;
+
+  --background: #ffffff;
+  --foreground: #171717;
+
+  --surface: #f8fafc;
+  --surface-secondary: #f1f5f9;
+
+  --border: #e5e7eb;
+
+  --muted: #64748b;
+  --muted-foreground: #6b7280;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-soft: #eff6ff;
+
+  --card: #ffffff;
+  --input: #ffffff;
+
+  --shadow-color: rgba(15, 23, 42, 0.08);
+}
+
+/* =====================================================
+   DARK THEME
+   ===================================================== */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: #09090b;
+  --foreground: #f4f4f5;
+
+  --surface: #18181b;
+  --surface-secondary: #27272a;
+
+  --border: #3f3f46;
+
+  --muted: #a1a1aa;
+  --muted-foreground: #a1a1aa;
+
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-soft: #172554;
+
+  --card: #18181b;
+  --input: #18181b;
+
+  --shadow-color: rgba(0, 0, 0, 0.25);
+}
+
+/* =====================================================
+   GLOBAL DOCUMENT STYLES
+   ===================================================== */
 
 html,
 body {
@@ -32,191 +80,186 @@ body {
 }
 
 html {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  transition: background-color 180ms ease, color 180ms ease;
-}
-
-/* Form controls */
-input,
-textarea,
-select {
-  color: var(--foreground);
+  margin: 0;
   background-color: var(--background);
-  border-color: var(--border);
+  color: var(--foreground);
+
+  font-family:
+    var(--font-geist-sans),
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
-:root[data-theme="dark"] input::placeholder,
-:root[data-theme="dark"] textarea::placeholder {
-  color: #a1a1aa;
+/* =====================================================
+   ACCESSIBILITY
+   ===================================================== */
+
+button {
+  cursor: pointer;
 }
 
-/* Common Tailwind surfaces */
-:root[data-theme="dark"] .bg-white {
-  background-color: var(--surface) !important;
+button:disabled {
+  cursor: not-allowed;
 }
 
-:root[data-theme="dark"] .bg-gray-50,
-:root[data-theme="dark"] .bg-gray-100 {
-  background-color: #27272a !important;
-}
-
-:root[data-theme="dark"] .bg-gray-200 {
-  background-color: #3f3f46 !important;
-}
-
-/* Text colors */
-:root[data-theme="dark"] .text-gray-900,
-:root[data-theme="dark"] .text-gray-800 {
-  color: var(--foreground) !important;
-}
-
-:root[data-theme="dark"] .text-gray-700,
-:root[data-theme="dark"] .text-gray-600,
-:root[data-theme="dark"] .text-gray-500 {
-  color: var(--muted) !important;
-}
-
-/* Borders and dividers */
-:root[data-theme="dark"] .border-gray-100,
-:root[data-theme="dark"] .border-gray-200,
-:root[data-theme="dark"] .border-gray-300 {
-  border-color: var(--border) !important;
-}
-
-:root[data-theme="dark"] .divide-gray-100 > :not(:last-child),
-:root[data-theme="dark"] .divide-gray-200 > :not(:last-child) {
-  border-color: var(--border) !important;
-}
-
-/* Common hover states */
-:root[data-theme="dark"] .hover\:bg-gray-50:hover,
-:root[data-theme="dark"] .hover\:bg-gray-100:hover {
-  background-color: #3f3f46 !important;
-}
-
-/* Smooth theme transitions */
-* {
-  transition-property: background-color, border-color, color;
-  transition-duration: 180ms;
-  transition-timing-function: ease;
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
   }
 }
 
-/* Global dark theme corrections */
-:root[data-theme="dark"] body {
-  background-color: #09090b;
-  color: #f4f4f5;
+/* =====================================================
+   FORM CONTROLS
+   ===================================================== */
+
+input,
+textarea,
+select {
+  color: var(--foreground);
+  background-color: var(--input);
+  border-color: var(--border);
 }
 
-/* Light backgrounds become dark */
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary);
+}
+
+/* =====================================================
+   COMMON DARK THEME CORRECTIONS
+   ===================================================== */
+
+/* Backgrounds */
+
 :root[data-theme="dark"] .bg-white,
 :root[data-theme="dark"] .bg-gray-50,
+:root[data-theme="dark"] .bg-gray-100,
 :root[data-theme="dark"] .bg-slate-50,
 :root[data-theme="dark"] .bg-slate-100,
 :root[data-theme="dark"] .bg-zinc-50,
 :root[data-theme="dark"] .bg-neutral-50 {
-  background-color: #18181b !important;
+  background-color: var(--surface) !important;
 }
 
-/* Main text becomes readable */
+:root[data-theme="dark"] .bg-gray-200 {
+  background-color: var(--surface-secondary) !important;
+}
+
+/* Text */
+
 :root[data-theme="dark"] .text-black,
 :root[data-theme="dark"] .text-gray-900,
 :root[data-theme="dark"] .text-gray-800,
-:root[data-theme="dark"] .text-gray-700,
 :root[data-theme="dark"] .text-slate-900,
 :root[data-theme="dark"] .text-slate-800,
 :root[data-theme="dark"] .text-zinc-900 {
-  color: #f4f4f5 !important;
+  color: var(--foreground) !important;
 }
 
-/* Secondary text remains readable */
+:root[data-theme="dark"] .text-gray-700,
 :root[data-theme="dark"] .text-gray-600,
 :root[data-theme="dark"] .text-gray-500,
 :root[data-theme="dark"] .text-slate-600,
 :root[data-theme="dark"] .text-slate-500,
 :root[data-theme="dark"] .text-zinc-600,
 :root[data-theme="dark"] .text-zinc-500 {
-  color: #d4d4d8 !important;
+  color: var(--muted) !important;
 }
 
-/* Cards, borders and form fields */
+/* Borders */
+
 :root[data-theme="dark"] .border-gray-100,
 :root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border-gray-300,
 :root[data-theme="dark"] .border-slate-200,
 :root[data-theme="dark"] .border-zinc-200 {
-  border-color: #3f3f46 !important;
+  border-color: var(--border) !important;
 }
 
-:root[data-theme="dark"] input,
-:root[data-theme="dark"] textarea,
-:root[data-theme="dark"] select {
-  background-color: #18181b;
-  color: #f4f4f5;
-  border-color: #3f3f46;
+/* Hover */
+
+:root[data-theme="dark"] .hover\:bg-gray-50:hover,
+:root[data-theme="dark"] .hover\:bg-gray-100:hover {
+  background-color: var(--surface-secondary) !important;
 }
 
-:root[data-theme="dark"] input::placeholder,
-:root[data-theme="dark"] textarea::placeholder {
-  color: #a1a1aa;
-}
+/* =====================================================
+   CONTROL PANEL THEME SUPPORT
+   ===================================================== */
 
-/* Control Panel: consistent dark theme */
 :root[data-theme="dark"] .control-panel-theme {
-  background-color: #09090b;
-  color: #f4f4f5;
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 :root[data-theme="dark"] .control-panel-theme .cp-surface {
-  background-color: #18181b !important;
-  color: #f4f4f5 !important;
-  border-color: #3f3f46 !important;
+  background-color: var(--surface) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
 }
 
 :root[data-theme="dark"] .control-panel-theme .cp-muted {
-  color: #d4d4d8 !important;
+  color: var(--muted) !important;
 }
 
 :root[data-theme="dark"] .control-panel-theme .cp-input {
-  background-color: #18181b !important;
-  color: #f4f4f5 !important;
-  border-color: #52525b !important;
+  background-color: var(--input) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
 }
 
 :root[data-theme="dark"] .control-panel-theme .cp-soft {
-  background-color: #27272a !important;
-  color: #f4f4f5 !important;
-  border-color: #3f3f46 !important;
+  background-color: var(--surface-secondary) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
 }
 
-/* =========================================================
-   SOFT PREMIUM DARK THEME — AI Agent Wizard
-   ========================================================= */
+/* =====================================================
+   AI AGENT WIZARD — DARK THEME
+   Preserve existing wizard design
+   ===================================================== */
 
 :root[data-theme="dark"] .wizard-theme {
   --wiz-page: #161e2d;
   --wiz-surface: #202b3d;
   --wiz-surface-soft: #263449;
+
   --wiz-text: #edf2fa;
   --wiz-muted: #b5c1d3;
+
   --wiz-border: #3a4960;
+
   --wiz-input: #1a2638;
   --wiz-input-text: #edf2fa;
+
   --wiz-step: #2a394f;
   --wiz-step-text: #e0e9f6;
+
   --wiz-info: #293b55;
   --wiz-info-text: #d2e1ff;
 
@@ -225,13 +268,16 @@ select {
 }
 
 /* Main panel */
+
 :root[data-theme="dark"] .wizard-theme > div > div {
   background: var(--wiz-surface) !important;
   border-color: var(--wiz-border) !important;
+
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
 }
 
 /* Header, sections and footer */
+
 :root[data-theme="dark"] .wizard-theme header,
 :root[data-theme="dark"] .wizard-theme section,
 :root[data-theme="dark"] .wizard-theme footer {
@@ -239,7 +285,8 @@ select {
   border-color: var(--wiz-border) !important;
 }
 
-/* Normal step cards */
+/* Normal steps */
+
 :root[data-theme="dark"] .wizard-theme button.border-slate-200 {
   background-color: var(--wiz-step) !important;
   border-color: var(--wiz-border) !important;
@@ -247,33 +294,39 @@ select {
 }
 
 /* Normal step number */
+
 :root[data-theme="dark"] .wizard-theme button.border-slate-200 .bg-slate-200 {
   background-color: #3a4b64 !important;
   color: #edf2fa !important;
 }
 
 /* Active step */
+
 :root[data-theme="dark"] .wizard-theme button.border-blue-600 {
   background-color: #416fc1 !important;
   border-color: #6d94dc !important;
   color: #ffffff !important;
+
   box-shadow: 0 3px 10px rgba(65, 111, 193, 0.16);
 }
 
 /* Active step number */
+
 :root[data-theme="dark"] .wizard-theme button.border-blue-600 .bg-white {
   background-color: #e8efff !important;
   color: #315a9e !important;
 }
 
 /* Completed steps */
+
 :root[data-theme="dark"] .wizard-theme button.border-blue-200 {
   background-color: #293b52 !important;
   border-color: #496486 !important;
   color: #e0eaff !important;
 }
 
-/* Form controls */
+/* Wizard form controls */
+
 :root[data-theme="dark"] .wizard-theme input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
 :root[data-theme="dark"] .wizard-theme textarea,
 :root[data-theme="dark"] .wizard-theme select {
@@ -282,13 +335,15 @@ select {
   border-color: var(--wiz-border) !important;
 }
 
-/* Placeholder text */
+/* Placeholder */
+
 :root[data-theme="dark"] .wizard-theme input::placeholder,
 :root[data-theme="dark"] .wizard-theme textarea::placeholder {
   color: #9aaac0 !important;
 }
 
 /* Information panels */
+
 :root[data-theme="dark"] .wizard-theme .bg-blue-50 {
   background-color: var(--wiz-info) !important;
 }
@@ -299,7 +354,8 @@ select {
   color: var(--wiz-info-text) !important;
 }
 
-/* General readable text */
+/* Wizard text */
+
 :root[data-theme="dark"] .wizard-theme .text-slate-900,
 :root[data-theme="dark"] .wizard-theme .text-slate-800,
 :root[data-theme="dark"] .wizard-theme .text-slate-700 {
@@ -311,17 +367,12 @@ select {
   color: var(--wiz-muted) !important;
 }
 
-/* Focus state */
+/* Wizard focus */
+
 :root[data-theme="dark"] .wizard-theme input:focus,
 :root[data-theme="dark"] .wizard-theme textarea:focus,
 :root[data-theme="dark"] .wizard-theme select:focus {
   border-color: #83a5e6 !important;
   box-shadow: 0 0 0 2px rgba(131, 165, 230, 0.16);
   outline: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wizard-theme {
-    transition: none !important;
-  }
 }

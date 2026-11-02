@@ -9,9 +9,9 @@ const resources = [
 
 export default function ResourceUsage() {
   return (
-    <section className="rounded-xl border border-white/10 bg-[#101927] p-4 text-white">
+    <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-foreground transition-colors">
       <h2 className="text-sm font-semibold">Resource Utilization</h2>
-      <p className="mt-1 text-xs text-gray-400">
+      <p className="mt-1 text-xs text-[var(--muted)]">
         Illustrative demo values
       </p>
 
@@ -19,11 +19,13 @@ export default function ResourceUsage() {
         {resources.map((resource) => (
           <div key={resource.name}>
             <div className="mb-2 flex justify-between text-xs">
-              <span className="text-gray-300">{resource.name}</span>
-              <span className="text-cyan-400">{resource.value}%</span>
+              <span className="text-[var(--muted)]">{resource.name}</span>
+              <span className="font-medium text-cyan-600 dark:text-cyan-400">
+                {resource.value}%
+              </span>
             </div>
 
-            <div className="h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="h-2 overflow-hidden rounded-full bg-[var(--border)]">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-400"
                 style={{ width: `${resource.value}%` }}

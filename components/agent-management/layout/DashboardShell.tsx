@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
-import Sidebar from "./sidebar";
-import Header from "./Header";
+import "@xyflow/react/dist/style.css";
+
+import Sidebar from "@/components/agent-management/layout/sidebar";
+import Header from "@/components/agent-management/layout/Header";
 
 interface DashboardShellProps {
   children: ReactNode;
@@ -10,20 +12,22 @@ export default function DashboardShell({
   children,
 }: DashboardShellProps) {
   return (
-    <div className="flex min-h-screen bg-[#080D16] text-white">
+    <div className="flex min-h-screen bg-background text-foreground">
 
-      {/* Left Sidebar */}
+      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Dashboard Area */}
+      {/* Main Application */}
       <div className="flex min-w-0 flex-1 flex-col">
 
-        {/* Top Header */}
+        {/* Global Header */}
         <Header />
 
-        {/* Page Content */}
-        <main className="min-w-0 flex-1 overflow-x-hidden p-5 md:p-8">
-          {children}
+        {/* Main Content */}
+        <main className="min-w-0 flex-1 overflow-x-hidden bg-background p-4 sm:p-5 md:p-8">
+          <div className="mx-auto w-full max-w-[1600px]">
+            {children}
+          </div>
         </main>
 
       </div>

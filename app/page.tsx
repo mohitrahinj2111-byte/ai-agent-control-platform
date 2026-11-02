@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowRight,
@@ -19,37 +19,81 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Mail,
+  Send,
+  Eye,
+  Network,
+  UserCheck,
+  Building2,
+  Target,
+  ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import { createClient } from "@/lib/client";
+
+const CONTACT_EMAIL = "rahinjmohit7@gmail.com";
 
 const features = [
   {
     icon: Link2,
     title: "Connect & Discover",
-    text: "Connect agents from different vendors, platforms and runtimes in one place.",
+    text: "Connect AI agents from different vendors, platforms and runtimes in one centralized environment.",
   },
   {
     icon: Shield,
     title: "Permissions & Security",
-    text: "Manage access, apply security policies and control what agents can do.",
+    text: "Define agent permissions, restrict sensitive operations and establish security boundaries.",
   },
   {
     icon: Workflow,
     title: "Coordinate & Approve",
-    text: "Coordinate agent workflows and require human approval for sensitive actions.",
+    text: "Coordinate agent workflows and introduce human approval for sensitive or important actions.",
   },
   {
     icon: Activity,
     title: "Monitor & Govern",
-    text: "Track activity, monitor performance and prepare for cost and compliance reporting.",
+    text: "Build visibility into agent activity, performance, operational risks and governance.",
   },
 ];
 
-const agents = [
-  { name: "Customer Support Agent", vendor: "OpenAI", status: "Running" },
-  { name: "Research Agent", vendor: "Anthropic", status: "Running" },
-  { name: "Data Analyst Agent", vendor: "Google", status: "Running" },
-  { name: "Marketing Agent", vendor: "Microsoft", status: "Pending" },
+const previewAgents = [
+  { name: "Customer Support Agent", vendor: "OpenAI", status: "Example" },
+  { name: "Research Agent", vendor: "Anthropic", status: "Example" },
+  { name: "Data Analyst Agent", vendor: "Google", status: "Example" },
+  { name: "Marketing Agent", vendor: "Microsoft", status: "Example" },
+];
+
+const capabilities = [
+  {
+    icon: Network,
+    title: "Agent Discovery",
+    text: "Build a central registry of AI agents across supported platforms and runtimes.",
+  },
+  {
+    icon: LockKeyhole,
+    title: "Access & Permissions",
+    text: "Define which tools, resources and operations an agent is allowed to access.",
+  },
+  {
+    icon: UserCheck,
+    title: "Human Oversight",
+    text: "Keep people involved in important decisions and sensitive agent operations.",
+  },
+  {
+    icon: Eye,
+    title: "Operational Visibility",
+    text: "Create a unified view of connected agents, their activity and their operational state.",
+  },
+  {
+    icon: BarChart3,
+    title: "Monitoring & Cost",
+    text: "Work toward usage visibility, performance monitoring and cost analysis.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Security & Governance",
+    text: "Establish policies, audit trails and organizational governance controls.",
+  },
 ];
 
 function getAccountInitial(email: string) {
@@ -81,6 +125,11 @@ export default function Home() {
   const [authReady, setAuthReady] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const accountAreaRef = useRef<HTMLDivElement>(null);
+
+  const [contactName, setContactName] = useState("");
+  const [contactSender, setContactSender] = useState("");
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -123,7 +172,6 @@ export default function Home() {
     };
   }, []);
 
-  // Close the dropdown when clicking outside it or pressing Escape.
   useEffect(() => {
     if (!accountMenuOpen) return;
 
@@ -164,10 +212,30 @@ export default function Home() {
     window.location.assign("/");
   }
 
+  function handleContactSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const subject = encodeURIComponent(contactSubject.trim());
+
+    const body = encodeURIComponent(
+      `Name: ${contactName.trim()}\n` +
+      `Sender Email: ${contactSender.trim()}\n\n` +
+      `Message:\n${contactMessage.trim()}`
+    );
+
+    const mailtoUrl =
+      `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+
+    window.location.href = mailtoUrl;
+  }
+
   return (
     <main className="min-h-screen bg-background text-foreground">
+
+      {/* HEADER */}
       <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
+
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white">
               A
@@ -178,38 +246,35 @@ export default function Home() {
           </Link>
 
           <nav className="order-3 flex w-full items-center justify-center gap-5 overflow-x-auto text-sm opacity-80 sm:order-2 sm:w-auto sm:gap-8">
+
             <Link
               href="/"
               className="whitespace-nowrap border-b-2 border-blue-600 py-2 font-semibold text-blue-500"
             >
               Home
             </Link>
+
             <Link
               href="/agent-management"
               className="whitespace-nowrap hover:text-blue-500"
             >
-              agent management
+              Agent Management
             </Link>
-            <Link
-              href="#about"
-              className="whitespace-nowrap hover:text-blue-500"
-            >
+
+            <Link href="#about" className="whitespace-nowrap hover:text-blue-500">
               About Us
             </Link>
-            <Link
-              href="#contact"
-              className="whitespace-nowrap hover:text-blue-500"
-            >
+
+            <Link href="#contact" className="whitespace-nowrap hover:text-blue-500">
               Contact
             </Link>
-            <Link
-              href="/settings"
-              className="whitespace-nowrap hover:text-blue-500"
-            >
+
+            <Link href="/settings" className="whitespace-nowrap hover:text-blue-500">
               Settings
             </Link>
           </nav>
 
+          {/* ACCOUNT MENU */}
           <div
             ref={accountAreaRef}
             className="relative order-2 flex items-center gap-2 sm:order-3"
@@ -254,12 +319,8 @@ export default function Home() {
                       </span>
 
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold">
-                          {email}
-                        </p>
-                        <p className="mt-1 text-xs opacity-60">
-                          Your account
-                        </p>
+                        <p className="truncate text-sm font-semibold">{email}</p>
+                        <p className="mt-1 text-xs opacity-60">Your account</p>
                       </div>
                     </div>
 
@@ -269,7 +330,7 @@ export default function Home() {
                       onClick={() => setAccountMenuOpen(false)}
                       className="flex rounded-lg px-3 py-3 text-sm hover:bg-[var(--surface)]"
                     >
-                      agent management
+                      Agent Management
                     </Link>
 
                     <Link
@@ -359,14 +420,16 @@ export default function Home() {
         </div>
       </header>
 
+      {/* HERO */}
       <section className="relative overflow-hidden border-b border-[var(--border)]">
         <div className="pointer-events-none absolute right-0 top-10 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-5 py-16 sm:px-8 md:py-24 lg:grid-cols-2 lg:gap-12">
+
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-500">
               <Zap size={15} />
-              AI Agent agent control platform
+              AI Agent Control Plane
             </div>
 
             <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
@@ -412,6 +475,7 @@ export default function Home() {
             </div>
           </div>
 
+          {/* PRODUCT PREVIEW */}
           <div className="relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-3 shadow-2xl shadow-blue-900/10 sm:p-5">
             <div className="flex items-center gap-1.5 border-b border-[var(--border)] pb-4">
               <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
@@ -457,14 +521,10 @@ export default function Home() {
                   {[
                     { label: "Total Agents", value: "—", icon: Bot },
                     { label: "Active", value: "—", icon: Zap },
-                    {
-                      label: "Pending Approval",
-                      value: "—",
-                      icon: Clock3,
-                    },
+                    { label: "Pending Approval", value: "—", icon: Clock3 },
                     {
                       label: "Cost Tracking",
-                      value: "Ready to configure",
+                      value: "Not configured",
                       icon: CircleDollarSign,
                     },
                   ].map((metric) => (
@@ -472,10 +532,7 @@ export default function Home() {
                       key={metric.label}
                       className="rounded-xl border border-[var(--border)] bg-background p-3"
                     >
-                      <metric.icon
-                        size={17}
-                        className="mb-2 text-blue-500"
-                      />
+                      <metric.icon size={17} className="mb-2 text-blue-500" />
                       <div className="text-sm font-bold">{metric.value}</div>
                       <div className="mt-1 text-[10px] leading-4 opacity-60">
                         {metric.label}
@@ -495,7 +552,7 @@ export default function Home() {
                     </Link>
                   </div>
 
-                  {agents.map((agent) => (
+                  {previewAgents.map((agent) => (
                     <div
                       key={agent.name}
                       className="flex items-center gap-2 border-t border-[var(--border)] py-3 first:border-0"
@@ -513,20 +570,14 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <span
-                        className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                          agent.status === "Running"
-                            ? "bg-green-500/10 text-green-600"
-                            : "bg-amber-500/10 text-amber-600"
-                        }`}
-                      >
+                      <span className="rounded-full bg-blue-500/10 px-2 py-1 text-[10px] font-semibold text-blue-500">
                         {agent.status}
                       </span>
                     </div>
                   ))}
 
                   <p className="mt-2 text-[10px] leading-4 opacity-50">
-                    Illustrative preview — live metrics are not connected here.
+                    Illustrative preview only. These are not live connected agents.
                   </p>
                 </div>
               </div>
@@ -544,22 +595,22 @@ export default function Home() {
         </div>
       </section>
 
-      <section
-        id="platform"
-        className="scroll-mt-24 px-5 py-20 sm:px-8 md:py-24"
-      >
+      {/* PLATFORM FEATURES */}
+      <section id="platform" className="scroll-mt-24 px-5 py-20 sm:px-8 md:py-24">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
-              Key features
+              Platform capabilities
             </p>
+
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
               One control plane for your{" "}
               <span className="text-blue-500">AI workforce</span>
             </h2>
+
             <p className="mt-4 leading-7 opacity-70">
-              A central place to connect, manage, secure and scale AI agents
-              across your organization.
+              A central environment designed to help organizations connect,
+              manage, secure and coordinate their AI agents.
             </p>
           </div>
 
@@ -572,7 +623,9 @@ export default function Home() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
                   <feature.icon size={23} />
                 </div>
+
                 <h3 className="mt-5 text-lg font-bold">{feature.title}</h3>
+
                 <p className="mt-2 text-sm leading-6 opacity-70">
                   {feature.text}
                 </p>
@@ -582,81 +635,368 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ABOUT US */}
       <section
         id="about"
-        className="scroll-mt-24 border-y border-[var(--border)] bg-[var(--surface)] px-5 py-20 sm:px-8"
+        className="scroll-mt-24 border-y border-[var(--border)] bg-[var(--surface)] px-5 py-20 sm:px-8 md:py-24"
       >
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
-          <div>
+        <div className="mx-auto max-w-7xl">
+
+          <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
-              Built for oversight
+              About Our Platform
             </p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Give agents capabilities. Keep humans in control.
+
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">
+              Building a central operating layer for the AI workforce.
             </h2>
-            <p className="mt-5 max-w-xl leading-7 opacity-70">
-              As organizations adopt more AI agents, they need clear visibility
-              into what is connected, what actions are allowed, and where human
-              review is needed.
+
+            <p className="mt-6 text-base leading-8 opacity-75">
+              AI Agent Control Platform is being developed around a simple
+              idea: organizations should have a unified place to understand
+              and manage the AI agents they use across different vendors,
+              platforms and execution environments.
             </p>
-            <Link
-              href="/agent-management"
-              className="mt-7 inline-flex items-center gap-2 font-semibold text-blue-500 hover:opacity-80"
-            >
-              Explore the Control Panel <ArrowRight size={17} />
-            </Link>
+
+            <p className="mt-4 text-base leading-8 opacity-75">
+              As businesses adopt more AI-powered systems, agents can become
+              distributed across departments, tools and runtimes. This creates
+              challenges around visibility, permissions, security,
+              coordination and accountability.
+            </p>
+
+            <p className="mt-4 text-base leading-8 opacity-75">
+              Our goal is to develop a control plane that helps organizations
+              bring these agents into one operational environment. Instead of
+              managing every agent separately, companies can work toward a
+              clearer picture of what is connected, what each agent is
+              permitted to do and how its activities are governed.
+            </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[
-              {
-                title: "Access control",
-                text: "Plan permissions for tools, data and systems.",
-                icon: LockKeyhole,
-              },
-              {
-                title: "Human approval",
-                text: "Design review steps for sensitive actions.",
-                icon: Users,
-              },
-              {
-                title: "Activity visibility",
-                text: "Work toward clear operational monitoring.",
-                icon: Activity,
-              },
-              {
-                title: "Cost awareness",
-                text: "Prepare for usage and cost reporting.",
-                icon: CircleDollarSign,
-              },
-            ].map((item) => (
-              <div
-                key={item.title}
-                className="rounded-xl border border-[var(--border)] bg-background p-5"
-              >
-                <item.icon size={22} className="text-blue-500" />
-                <h3 className="mt-4 font-bold">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 opacity-70">
-                  {item.text}
+          <div className="mt-16 grid gap-6 md:grid-cols-2">
+            <div className="rounded-2xl border border-[var(--border)] bg-background p-7">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+                <Target size={24} />
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold">Our Mission</h3>
+
+              <p className="mt-3 leading-7 opacity-70">
+                To make AI agent operations more visible, manageable and
+                accountable by developing a centralized control layer for
+                enterprise AI workforces.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border)] bg-background p-7">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+                <Eye size={24} />
+              </div>
+
+              <h3 className="mt-5 text-xl font-bold">Our Vision</h3>
+
+              <p className="mt-3 leading-7 opacity-70">
+                A future where organizations can discover, connect, control,
+                coordinate, monitor and govern their AI workforce through
+                one reliable operating environment.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-20">
+            <div className="max-w-3xl">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
+                What We Are Building
+              </p>
+
+              <h3 className="mt-3 text-3xl font-bold tracking-tight">
+                Core platform capabilities
+              </h3>
+
+              <p className="mt-4 leading-7 opacity-70">
+                The platform is designed around these interconnected
+                operational capabilities.
+              </p>
+            </div>
+
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {capabilities.map((item) => (
+                <article
+                  key={item.title}
+                  className="rounded-xl border border-[var(--border)] bg-background p-6"
+                >
+                  <item.icon size={25} className="text-blue-500" />
+
+                  <h4 className="mt-4 font-bold">{item.title}</h4>
+
+                  <p className="mt-2 text-sm leading-6 opacity-70">
+                    {item.text}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-20">
+            <div className="max-w-3xl">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
+                Development Roadmap
+              </p>
+
+              <h3 className="mt-3 text-3xl font-bold tracking-tight">
+                Growing from agent visibility to centralized governance.
+              </h3>
+            </div>
+
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+              <div className="rounded-2xl border border-blue-500/30 bg-background p-6">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-500">
+                  NOW
+                </span>
+
+                <h4 className="mt-4 text-xl font-bold">
+                  Core Foundation
+                </h4>
+
+                <ul className="mt-4 space-y-3 text-sm leading-6 opacity-75">
+                  <li>• Agent registration and discovery</li>
+                  <li>• Agent management interface</li>
+                  <li>• Authentication and user-specific data</li>
+                  <li>• Initial platform architecture</li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-[var(--border)] bg-background p-6">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-500">
+                  LATER
+                </span>
+
+                <h4 className="mt-4 text-xl font-bold">
+                  Operational Control
+                </h4>
+
+                <ul className="mt-4 space-y-3 text-sm leading-6 opacity-75">
+                  <li>• Runtime and vendor integrations</li>
+                  <li>• Permission and policy enforcement</li>
+                  <li>• Human approval workflows</li>
+                  <li>• Activity monitoring and audit trails</li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-[var(--border)] bg-background p-6">
+                <span className="text-xs font-bold uppercase tracking-wider text-blue-500">
+                  LONG-TERM
+                </span>
+
+                <h4 className="mt-4 text-xl font-bold">
+                  Enterprise Control Plane
+                </h4>
+
+                <ul className="mt-4 space-y-3 text-sm leading-6 opacity-75">
+                  <li>• Multi-agent coordination</li>
+                  <li>• Advanced security and governance</li>
+                  <li>• Cost and resource management</li>
+                  <li>• Enterprise reporting and oversight</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-20 rounded-2xl border border-[var(--border)] bg-background p-8 sm:p-10">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+                <Building2 size={28} />
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-bold">
+                  Designed for organizational AI operations
+                </h3>
+
+                <p className="mt-3 max-w-3xl leading-7 opacity-70">
+                  The long-term objective is to support organizations as
+                  their AI workforce grows, while keeping security,
+                  reliability, interoperability and human oversight central
+                  to the architecture.
                 </p>
               </div>
-            ))}
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <Link
+              href="/agent-management"
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+            >
+              Explore Agent Management <ArrowRight size={18} />
+            </Link>
           </div>
         </div>
       </section>
 
+      {/* CONTACT */}
       <section
         id="contact"
-        className="scroll-mt-24 px-5 py-16 sm:px-8"
+        className="scroll-mt-24 px-5 py-20 sm:px-8 md:py-24"
       >
+        <div className="mx-auto max-w-7xl">
+
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-500">
+              Contact Us
+            </p>
+
+            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">
+              Let&apos;s connect.
+            </h2>
+
+            <p className="mt-5 leading-8 opacity-70">
+              Have a question, feedback, partnership idea or business inquiry?
+              Send us a message. We would like to hear from you.
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 sm:p-9">
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500">
+                <Mail size={27} />
+              </div>
+
+              <h3 className="mt-6 text-2xl font-bold">
+                Email Support
+              </h3>
+
+              <p className="mt-3 leading-7 opacity-70">
+                Contact us directly through email for questions, feedback,
+                collaboration and platform-related inquiries.
+              </p>
+
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="mt-6 inline-flex items-center gap-2 break-all font-semibold text-blue-500 hover:underline"
+              >
+                {CONTACT_EMAIL}
+                <ArrowRight size={16} />
+              </a>
+
+              <div className="mt-8 border-t border-[var(--border)] pt-6">
+                <p className="text-sm font-semibold">What can you contact us about?</p>
+
+                <ul className="mt-4 space-y-3 text-sm opacity-70">
+                  <li>• General questions</li>
+                  <li>• Product feedback</li>
+                  <li>• Business inquiries</li>
+                  <li>• Partnership opportunities</li>
+                  <li>• Technical questions</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 sm:p-9">
+              <h3 className="text-2xl font-bold">Send Us a Message</h3>
+
+              <p className="mt-2 text-sm leading-6 opacity-70">
+                Fill in the details below. Your email application will open
+                with the message prepared for our contact address.
+              </p>
+
+              <form onSubmit={handleContactSubmit} className="mt-8 space-y-5">
+
+                <div>
+                  <label htmlFor="contact-name" className="mb-2 block text-sm font-semibold">
+                    Your Name
+                  </label>
+
+                  <input
+                    id="contact-name"
+                    type="text"
+                    required
+                    maxLength={100}
+                    value={contactName}
+                    onChange={(event) => setContactName(event.target.value)}
+                    placeholder="Enter your name"
+                    className="w-full rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none transition focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contact-email" className="mb-2 block text-sm font-semibold">
+                    Your Email
+                  </label>
+
+                  <input
+                    id="contact-email"
+                    type="email"
+                    required
+                    maxLength={254}
+                    value={contactSender}
+                    onChange={(event) => setContactSender(event.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none transition focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contact-subject" className="mb-2 block text-sm font-semibold">
+                    Subject
+                  </label>
+
+                  <input
+                    id="contact-subject"
+                    type="text"
+                    required
+                    maxLength={150}
+                    value={contactSubject}
+                    onChange={(event) => setContactSubject(event.target.value)}
+                    placeholder="What would you like to discuss?"
+                    className="w-full rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none transition focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="contact-message" className="mb-2 block text-sm font-semibold">
+                    Message
+                  </label>
+
+                  <textarea
+                    id="contact-message"
+                    required
+                    minLength={10}
+                    maxLength={5000}
+                    rows={6}
+                    value={contactMessage}
+                    onChange={(event) => setContactMessage(event.target.value)}
+                    placeholder="Write your message here..."
+                    className="w-full resize-y rounded-xl border border-[var(--border)] bg-background px-4 py-3 outline-none transition focus:border-blue-500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-blue-600 px-6 py-4 font-semibold text-white transition hover:bg-blue-700"
+                >
+                  Send Message
+                  <Send size={18} />
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="px-5 pb-16 sm:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 rounded-2xl bg-blue-600 p-8 text-white sm:p-12 md:flex-row md:items-center">
           <div>
             <h2 className="text-2xl font-bold sm:text-3xl">
               Bring your AI workforce into view.
             </h2>
+
             <p className="mt-3 max-w-2xl leading-7 text-blue-100">
-              Start with the agents you have today and build toward centralized
-              control, permissions and governance.
+              Start with the agents you have today and build toward
+              centralized control, permissions and governance.
             </p>
           </div>
 
@@ -664,22 +1004,26 @@ export default function Home() {
             href={email ? "/agent-management" : "/signup"}
             className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 font-semibold text-blue-700 hover:bg-blue-50"
           >
-            {email ? "Open Control Panel" : "Get started"}{" "}
+            {email ? "Open Agent Management" : "Get Started"}
             <ArrowRight size={18} />
           </Link>
         </div>
       </section>
 
+      {/* FOOTER */}
       <footer className="border-t border-[var(--border)] bg-background">
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-8 sm:px-8 md:flex-row md:items-center md:justify-between">
+
           <Link href="/" className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
               A
             </span>
+
             <span>
               <span className="block text-sm font-bold">
                 AI Agent Control Platform
               </span>
+
               <span className="block text-xs opacity-60">
                 Control your company&apos;s AI workforce.
               </span>
@@ -690,9 +1034,15 @@ export default function Home() {
             <Link href="#about" className="hover:text-blue-500">
               About Us
             </Link>
+
             <Link href="#contact" className="hover:text-blue-500">
               Contact
             </Link>
+
+            <Link href="/agent-management" className="hover:text-blue-500">
+              Agent Management
+            </Link>
+
             <Link href="/settings" className="hover:text-blue-500">
               Settings
             </Link>
@@ -702,6 +1052,7 @@ export default function Home() {
                 <Link href="/login" className="hover:text-blue-500">
                   Log in
                 </Link>
+
                 <Link href="/signup" className="hover:text-blue-500">
                   Sign up
                 </Link>

@@ -7,28 +7,27 @@ import ControlChat from "@/components/agent-management/chat/ControlChat";
 
 export default function AgentManagementPage() {
   return (
-    <main className="min-h-screen space-y-6 bg-[#080D16] p-4 text-white sm:p-6">
+    <div className="min-h-full space-y-6 bg-background p-4 text-foreground sm:p-6">
 
       {/* Workspace Header */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
             AI Agent Control Plane
           </p>
 
-          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">
+          <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
             Agent Workspace
           </h1>
 
-          <p className="mt-2 text-sm text-gray-400">
-            Visualize and manage your company's AI workforce.
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Visualize and manage your company&apos;s AI workforce.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="rounded-lg border border-cyan-400/20 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-300">
-            Demo Workspace
-          </span>
+        <div className="inline-flex items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 py-2.5 text-xs font-semibold text-blue-600">
+          <span className="h-2 w-2 rounded-full bg-blue-500" />
+          Workspace Preview
         </div>
       </header>
 
@@ -36,7 +35,7 @@ export default function AgentManagementPage() {
       <section className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
 
         {/* Central Agent Canvas */}
-        <div className="min-w-0 overflow-hidden rounded-xl">
+        <div className="min-h-[520px] min-w-0 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm">
           <AgentCanvas />
         </div>
 
@@ -56,14 +55,14 @@ export default function AgentManagementPage() {
         </aside>
       </section>
 
-      {/* Bottom Platform Engines */}
-      <section>
+      {/* Platform Engines */}
+      <section className="min-w-0">
         <EngineStatus />
       </section>
 
-      {/* Floating AI Command Chat */}
+      {/* AI Command Chat */}
       <ControlChat />
 
-    </main>
+    </div>
   );
 }

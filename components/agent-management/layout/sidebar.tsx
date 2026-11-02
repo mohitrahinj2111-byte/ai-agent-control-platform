@@ -13,6 +13,7 @@ import {
   Users,
   Plus,
   Network,
+  ArrowLeft,
 } from "lucide-react";
 
 const navigation = [
@@ -62,29 +63,40 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex min-h-screen w-64 shrink-0 flex-col border-r border-white/10 bg-[#080D16] text-white">
+    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-[var(--border)] bg-background text-foreground sm:w-64">
 
-      {/* Logo */}
-      <div className="flex h-20 items-center gap-3 border-b border-white/10 px-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400">
-          <Network size={23} />
+      {/* Branding */}
+      <div className="flex h-20 shrink-0 items-center gap-3 border-b border-[var(--border)] px-5">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+          <Network size={22} />
         </div>
 
-        <div>
-          <h1 className="text-lg font-bold tracking-wide">
-            Agent<span className="text-cyan-400">Control</span>
+        <div className="min-w-0">
+          <h1 className="truncate text-base font-bold tracking-tight">
+            AI Agent <span className="text-blue-600">Control</span>
           </h1>
 
-          <p className="text-xs text-gray-500">
-            Control Plane
+          <p className="text-xs text-[var(--muted)]">
+            Enterprise Control Plane
           </p>
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 px-4 py-6">
+      {/* Back to Home */}
+      <div className="border-b border-[var(--border)] p-4">
+        <Link
+          href="/"
+          className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold transition hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-600"
+        >
+          <ArrowLeft size={19} />
+          <span>Back to Home</span>
+        </Link>
+      </div>
 
-        <p className="mb-4 px-3 text-xs font-semibold uppercase tracking-widest text-gray-500">
+      {/* Workspace Navigation */}
+      <div className="flex-1 overflow-y-auto px-3 py-6 sm:px-4">
+
+        <p className="mb-4 px-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
           Workspace
         </p>
 
@@ -101,15 +113,30 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-sm transition-all ${
+                aria-current={isActive ? "page" : undefined}
+                className={`group flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition-all ${
                   isActive
-                    ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-400"
-                    : "border-transparent text-gray-400 hover:bg-white/5 hover:text-white"
+                    ? "border-blue-500/20 bg-blue-500/10 text-blue-600"
+                    : "border-transparent text-[var(--muted)] hover:border-[var(--border)] hover:bg-[var(--surface)] hover:text-foreground"
                 }`}
               >
-                <Icon size={18} strokeWidth={1.8} />
+                <Icon
+                  size={18}
+                  strokeWidth={1.8}
+                  className={
+                    isActive
+                      ? "text-blue-600"
+                      : "opacity-75 group-hover:text-blue-600"
+                  }
+                />
 
-                <span>{item.name}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {item.name}
+                </span>
+
+                {isActive && (
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" />
+                )}
               </Link>
             );
           })}
@@ -117,20 +144,19 @@ export default function Sidebar() {
       </div>
 
       {/* Add Agent */}
-      <div className="border-t border-white/10 p-4">
+      <div className="shrink-0 border-t border-[var(--border)] p-4">
         <Link
           href="/agent-management/add-agent"
-          className="flex items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-3 text-sm font-semibold text-black transition hover:bg-cyan-400"
+          className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-600/15 transition hover:bg-blue-700"
         >
           <Plus size={18} />
-          Add New Agent
+          Add Agent
         </Link>
 
-        <p className="mt-4 text-center text-xs text-gray-600">
+        <p className="mt-4 text-center text-[11px] text-[var(--muted)]">
           AI Agent Control Platform
         </p>
       </div>
-
     </aside>
   );
 }

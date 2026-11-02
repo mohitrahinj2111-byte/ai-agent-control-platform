@@ -161,7 +161,10 @@ function CanvasContent() {
           {
             ...connection,
             animated: true,
-            style: { stroke: "#60A5FA", strokeWidth: 2 },
+            style: {
+              stroke: "#3B82F6",
+              strokeWidth: 2,
+            },
           },
           currentEdges
         )
@@ -187,13 +190,21 @@ function CanvasContent() {
         isFullscreen
           ? "fixed inset-0 z-50"
           : "relative w-full"
-      } overflow-hidden rounded-xl border border-white/10 bg-[#080D16]`}
+      } overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] text-foreground shadow-sm`}
       style={{ height: isFullscreen ? "100vh" : "720px" }}
     >
-      <div className="absolute left-4 top-4 z-20 rounded-lg border border-white/10 bg-[#101927] px-3 py-2 text-sm text-gray-300">
-        Agent Organization Workspace
+      {/* Canvas Heading */}
+      <div className="absolute left-4 top-4 z-20 rounded-xl border border-[var(--border)] bg-background/95 px-4 py-3 shadow-sm backdrop-blur">
+        <p className="text-sm font-bold text-foreground">
+          Agent Organization Workspace
+        </p>
+
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          Visualize your agent hierarchy
+        </p>
       </div>
 
+      {/* Toolbar */}
       <CanvasToolbar
         onZoomIn={() => zoomIn()}
         onZoomOut={() => zoomOut()}
@@ -202,6 +213,7 @@ function CanvasContent() {
         isFullscreen={isFullscreen}
       />
 
+      {/* React Flow */}
       <ReactFlow<AgentFlowNode>
         nodes={nodes}
         edges={edges}
@@ -219,20 +231,23 @@ function CanvasContent() {
         deleteKeyCode={["Backspace", "Delete"]}
         defaultEdgeOptions={{
           animated: false,
-          style: { stroke: "#64748B", strokeWidth: 2 },
+          style: {
+            stroke: "var(--border)",
+            strokeWidth: 2,
+          },
         }}
-        className="bg-[#080D16]"
+        className="!bg-background"
       >
         <Background
           variant={BackgroundVariant.Dots}
           gap={22}
           size={1}
-          color="#334155"
+          color="var(--border)"
         />
 
         <Controls
           position="bottom-left"
-          className="!border-white/10 !bg-[#101927] !shadow-lg"
+          className="!overflow-hidden !rounded-xl !border !border-[var(--border)] !bg-background !shadow-lg [&>button]:!border-[var(--border)] [&>button]:!bg-background [&>button]:!fill-current [&>button]:!text-foreground [&>button:hover]:!bg-[var(--surface)]"
         />
 
         <MiniMap
@@ -240,24 +255,27 @@ function CanvasContent() {
           pannable
           zoomable
           nodeColor={(node) => {
-            if (node.type === "ceo") return "#3B82F6";
-            if (node.type === "manager") return "#8B5CF6";
+            if (node.type === "ceo") return "#2563EB";
+            if (node.type === "manager") return "#7C3AED";
             return "#0891B2";
           }}
-          maskColor="rgba(8, 13, 22, 0.7)"
-          className="!border !border-white/10 !bg-[#101927]"
+          maskColor="rgba(100, 116, 139, 0.15)"
+          className="!overflow-hidden !rounded-xl !border !border-[var(--border)] !bg-[var(--surface)]"
         />
       </ReactFlow>
 
+      {/* Selected Agent Details */}
       <AgentDetailsPanel
         node={selectedNode}
         onClose={() => setSelectedNode(null)}
       />
 
+      {/* Fullscreen Exit */}
       {isFullscreen && (
         <button
+          type="button"
           onClick={handleFullscreen}
-          className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-lg border border-white/10 bg-[#101927] px-4 py-2 text-sm text-white hover:bg-white/10"
+          className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-xl border border-[var(--border)] bg-background px-5 py-2.5 text-sm font-semibold text-foreground shadow-lg transition hover:bg-[var(--surface)]"
         >
           Exit Fullscreen
         </button>
