@@ -34,7 +34,7 @@ export default function SignupPage() {
       }
 
       if (data.session) {
-        router.replace("/control-panel");
+        router.replace("/agent-management");
         router.refresh();
       } else {
         setMessage(

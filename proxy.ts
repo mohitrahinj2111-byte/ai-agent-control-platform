@@ -32,7 +32,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isAddAgentPage =
-    request.nextUrl.pathname === "/control-panel/add-agent";
+    request.nextUrl.pathname === "/agent-management/add-agent";
 
   if (isAddAgentPage && !user) {
     const loginUrl = new URL("/login", request.url);

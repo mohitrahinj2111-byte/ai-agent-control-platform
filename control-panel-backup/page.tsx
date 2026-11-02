@@ -2233,7 +2233,7 @@ export default function ControlPanel() {
   }, [accountMenuOpen]);
 
   const openAddAgent = () => {
-    router.push("/control-panel/add-agent");
+    router.push("/agent-management/add-agent");
   };
 
   const openConnectWizard = () => {
@@ -2362,7 +2362,7 @@ export default function ControlPanel() {
   };
 
   return (
-    <main className="control-panel-theme min-h-screen bg-[#f5f8fc] text-slate-900">
+    <main className="agent-management-theme min-h-screen bg-[#f5f8fc] text-slate-900">
       {/* TOP BAR */}
       <header className="sticky top-0 z-30 flex min-h-[68px] flex-wrap items-center gap-4 border-b border-slate-200 bg-white px-5 py-3">
         <button
@@ -2453,7 +2453,7 @@ export default function ControlPanel() {
                   className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-lg"
                 >
                   {[
-                    { label: "Control Panel", href: "/control-panel" },
+                    { label: "Agent Management", href: "/agent-management" },
                     { label: "About Us", href: "/about" },
                     { label: "Contact", href: "/contact" },
                     { label: "Settings", href: "/settings" },

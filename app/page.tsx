@@ -188,7 +188,7 @@ export default function Home() {
               href="/agent-management"
               className="whitespace-nowrap hover:text-blue-500"
             >
-              Control Panel
+              agent management
             </Link>
             <Link
               href="#about"
@@ -269,7 +269,7 @@ export default function Home() {
                       onClick={() => setAccountMenuOpen(false)}
                       className="flex rounded-lg px-3 py-3 text-sm hover:bg-[var(--surface)]"
                     >
-                      Control Panel
+                      agent management
                     </Link>
 
                     <Link
@@ -366,7 +366,7 @@ export default function Home() {
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-blue-500">
               <Zap size={15} />
-              AI Agent Control Plane
+              AI Agent agent control platform
             </div>
 
             <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl">
@@ -385,7 +385,7 @@ export default function Home() {
                 href="/agent-management"
                 className="inline-flex items-center justify-center gap-3 rounded-xl bg-blue-600 px-6 py-4 font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
               >
-                Open Control Panel <ArrowRight size={18} />
+                Open Agent Management <ArrowRight size={18} />
               </Link>
 
               <Link
@@ -488,7 +488,7 @@ export default function Home() {
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <h3 className="text-sm font-bold">Agent overview</h3>
                     <Link
-                      href="/control-panel"
+                      href="/agent-management"
                       className="text-xs font-semibold text-blue-500"
                     >
                       Open panel
@@ -600,7 +600,7 @@ export default function Home() {
               review is needed.
             </p>
             <Link
-              href="/control-panel"
+              href="/agent-management"
               className="mt-7 inline-flex items-center gap-2 font-semibold text-blue-500 hover:opacity-80"
             >
               Explore the Control Panel <ArrowRight size={17} />
@@ -661,7 +661,7 @@ export default function Home() {
           </div>
 
           <Link
-            href={email ? "/control-panel" : "/signup"}
+            href={email ? "/agent-management" : "/signup"}
             className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 font-semibold text-blue-700 hover:bg-blue-50"
           >
             {email ? "Open Control Panel" : "Get started"}{" "}

@@ -763,7 +763,7 @@ export default function AddAgentPage() {
     // 5. Success
     alert("AI Agent saved successfully!");
 
-    router.push("/control-panel");
+    router.push("/agent-management");
     router.refresh();
 
   } catch (error) {

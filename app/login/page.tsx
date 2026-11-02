@@ -31,7 +31,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace("/control-panel");
+      router.replace("/agent-management");
       router.refresh();
     } catch {
       setMessage("Login failed. Please check your connection and try again.");

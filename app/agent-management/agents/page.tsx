@@ -38,7 +38,7 @@ export default function AgentsPage() {
         </div>
 
         <Link
-          href="/control-panel/add-agent"
+          href="/agent-management/add-agent"
           className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold hover:bg-blue-500"
         >
           + Add New Agent
